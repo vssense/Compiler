@@ -69,100 +69,6 @@ void PrintNodes(Tree* tree, Node* node, FILE* dump_file)
     assert(tree);
     assert(dump_file);
 
-    // switch (node->type)
-    // {
-    //     case D_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#EBF7F7\", label=\"%d | %s\"]",
-    //             node, node->type, "fict");
-    //         break;
-    //     }
-    //     case DECL_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, "=");
-    //         break;
-    //     }
-    //     case ID_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, node->value.name);
-    //         break;
-    //     }
-    //     case ARG_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#F0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, "arg");
-    //         break;
-    //     }
-    //     case COMP_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, "comp");
-    //         break;
-    //     }
-    //     case STAT_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#A2F39D\", label=\"%d | %s\"]",
-    //             node, node->type, "S");
-    //         break;
-    //     }
-    //     case COND_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#F3DF9D\", label=\"%d | %s\"]",
-    //             node, node->type, "if");
-    //         break;
-    //     }
-    //     case IFEL_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#F3DF9D\", label=\"%d | %s\"]",
-    //             node, node->type, "if-else");
-    //         break;
-    //     }
-    //     case LOOP_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#AEDEE8\", label=\"%d | %s\"]",
-    //             node, node->type, "while");
-    //         break;
-    //     }
-    //     case ASSG_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, "=");
-    //         break;
-    //     }
-    //     case CALL_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#AEE8C5\", label=\"%d | %s\"]",
-    //             node, node->type, "call");
-    //         break;
-    //     }
-    //     case JUMP_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#BC8ED7\", label=\"%d | %s\"]",
-    //             node, node->type, "return");
-    //         break;
-    //     }
-    //     case MATH_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %s\"]",
-    //             node, node->type, MathToString(node->value.op));
-    //         break;
-    //     }
-    //     case NUMB_TYPE :
-    //     {
-    //         fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"%d | %d\"]",
-    //             node, node->type, node->value.number);
-    //         break;
-    //     }
-    //     default : 
-    //     {
-    //         printf("Unknown type = %d\n", node->type);
-    //         break;
-    //     }
-    // }
-
-
     switch (node->type)
     {
         case D_TYPE :
@@ -183,6 +89,12 @@ void PrintNodes(Tree* tree, Node* node, FILE* dump_file)
         {
             fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"DECL_TYPE | %s\"]",
                     node, "=");
+            break;
+        }
+        case ADECL_TYPE :
+        {
+            fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#BC8E27\", label=\"ADECL_TYPE | %s\"]",
+                    node, "[]");
             break;
         }
         case ID_TYPE :
@@ -256,6 +168,12 @@ void PrintNodes(Tree* tree, Node* node, FILE* dump_file)
         {
             fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#C0F5F1\", label=\"NUMB_TYPE | %d\"]",
                     node, node->value.number);
+            break;
+        }
+        case MEM_ACCESS_TYPE :
+        {
+            fprintf(dump_file, "\"%p\"[style=\"filled\", fillcolor=\"#BC8E27\", label=\"MEM_ACCESS_TYPE | %s\"]",
+                    node, "[]");
             break;
         }
         default : 

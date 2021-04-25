@@ -12,13 +12,13 @@ static const size_t MAX_NAME_LEN = 32;
 enum OperatorType
 {
     DECLARATOR,
-    EMPTY,
+    VOID_FUNC,
     LOOP,
     RET,
     IF,
     ELSE,
     EQUAL,
-    ASSG,
+    ASSIGNMENT,
     PLUS,
     MINUS,
     MUL,
@@ -27,14 +27,14 @@ enum OperatorType
     EABOVE,
     BELOW,
     ABOVE,
-    NEQUAL,
-    BRACE1,
-    BRACE2,
-    RNDBR1,
-    RNDBR2,
-    SQRBR1,
-    SQRBR2,
-    SMCLN,
+    NOT_EQUAL,
+    OPENING_BRACE,
+    CLOSING_BRACE,
+    OPENING_ROUND_BRACKET,
+    CLOSING_ROUND_BRACKET,
+    OPENING_SQUARE_BRACKET,
+    CLOSING_SQUARE_BRACKET,
+    SEMICOLON,
     COMMA,
 
     NUM_OPERATORS
@@ -121,14 +121,16 @@ struct Token
     char* token_str;
 };
 
-enum ERROR
+enum Error
 {
     BUFFER_IS_OK,
     TYPE_ERROR,
     MISSED_BRACE,
     MISSED_SMCLN,
+    MISSED_BRACKET,
     GET_NUMBER_ERR,
     BRACKET_ERR,
+    SQR_BRACKET_ERR,
     UNKNOWN_SYMBOL,
     ASSG_ERROR,
     RET_ERROR,
@@ -149,7 +151,7 @@ struct Parser
     size_t size;
 
     char* original_buffer;
-    ERROR status;
+    Error status;
 };
 
 

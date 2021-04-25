@@ -4,29 +4,34 @@
 ////////////////////////////////////////////////////////
 // Building tree
 ////////////////////////////////////////////////////////
-Node* GetData             (Parser* parser, size_t* ofs);
-Node* GetDefinition       (Parser* parser, size_t* ofs);
-Node* GetCompound         (Parser* parser, size_t* ofs);
-Node* GetStatement        (Parser* parser, size_t* ofs);
-Node* GetAssignment       (Parser* parser, size_t* ofs);
-Node* GetExpression       (Parser* parser, size_t* ofs);
-Node* GetSimpleExpression (Parser* parser, size_t* ofs);
-Node* GetTerm             (Parser* parser, size_t* ofs);
-Node* GetPrimaryExpression(Parser* parser, size_t* ofs);
-Node* GetLoop             (Parser* parser, size_t* ofs);
-Node* GetCondition        (Parser* parser, size_t* ofs);
-Node* GetJump             (Parser* parser, size_t* ofs);
-Node* GetArgs             (Parser* parser, size_t* ofs);
-Node* GetParams           (Parser* parser, size_t* ofs);
+Node* GetData                  (Parser* parser, size_t* ofs);
+Node* GetDefinition            (Parser* parser, size_t* ofs);
+Node* GetCompound              (Parser* parser, size_t* ofs);
+Node* GetStatement             (Parser* parser, size_t* ofs);
+Node* GetArrayDeclaration      (Parser* parser, size_t* ofs);
+Node* GetAssignment            (Parser* parser, size_t* ofs);
+Node* GetExpression            (Parser* parser, size_t* ofs);
+Node* GetLValue                (Parser* parser, size_t* ofs);
+Node* GetSimpleExpression      (Parser* parser, size_t* ofs);
+Node* GetTerm                  (Parser* parser, size_t* ofs);
+Node* GetPrimaryExpression     (Parser* parser, size_t* ofs);
+Node* GetLoop                  (Parser* parser, size_t* ofs);
+Node* GetCondition             (Parser* parser, size_t* ofs);
+Node* GetJump                  (Parser* parser, size_t* ofs);
+Node* GetMemoryAccess          (Parser* parser, size_t* ofs);
+Node* GetArgs                  (Parser* parser, size_t* ofs);
+Node* GetParams                (Parser* parser, size_t* ofs);
 
-void  CheckOpeningBrace   (Parser* parser, size_t* ofs);
-void  CheckClosingBrace   (Parser* parser, size_t* ofs);
-void  CheckOpeningBracked (Parser* parser, size_t* ofs);
-void  CheckClosingBracked (Parser* parser, size_t* ofs);
-void  CheckSemicolon      (Parser* parser, size_t* ofs);
-void  CheckAssigment      (Parser* parser, size_t* ofs);
-bool  IsComparison        (Parser* parser, size_t* ofs);
-int   MathTokenToNode     (int op);
+void  CheckOpeningBrace        (Parser* parser, size_t* ofs);
+void  CheckClosingBrace        (Parser* parser, size_t* ofs);
+void  CheckOpeningRoundBracket (Parser* parser, size_t* ofs);
+void  CheckClosingRoundBracket (Parser* parser, size_t* ofs);
+void  CheckOpeningSquareBracket(Parser* parser, size_t* ofs);
+void  CheckClosingSquareBracket(Parser* parser, size_t* ofs);
+void  CheckSemicolon           (Parser* parser, size_t* ofs);
+void  CheckAssigment           (Parser* parser, size_t* ofs);
+bool  IsComparison             (Parser* parser, size_t* ofs);
+int   MathTokenToNode          (int op);
 
 Tree* NewTree       ();
 Node* NewNode       ();
@@ -35,14 +40,6 @@ Node* ConstructNode (NodeType type, Node* left, Node* right);
 Node* ConstructNode (NodeType type, Value value);
 Node* ConstructNode (NodeType type);
 void  DestuctSubtree(Node* node);
-
-
-///////////////////////////////////////////////////////
-// Work with file
-///////////////////////////////////////////////////////
-void WriteToFileRecursively(Node* node, FILE* file);
-void GetTreeFromBuffer     (Node* node, Buffer* buffer);
-void DeleteFictiveNodes    (Node* node);
 
 Tree* NewTree()
 {
@@ -157,7 +154,7 @@ Node* GetData(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    bool is_void = (VALUE.op == EMPTY);
+    bool is_void = (VALUE.op == VOID_FUNC);
 
     Node* result = ConstructNode(D_TYPE, nullptr, GetDefinition(parser, ofs));
     Node* last = result;
@@ -165,7 +162,7 @@ Node* GetData(Parser* parser, size_t* ofs)
 
     while (*ofs < parser->size)
     {
-        is_void = (VALUE.op == EMPTY);
+        is_void = (VALUE.op == VOID_FUNC);
         last->left = ConstructNode(D_TYPE, nullptr, GetDefinition(parser, ofs));
 
         last->left->parent = last;
@@ -181,7 +178,7 @@ Node* GetDefinition(Parser* parser, size_t* ofs)
     assert(parser);
     assert(ofs);
 
-    if (TYPE != TYPE_OP || (VALUE.op != DECLARATOR && VALUE.op != EMPTY))
+    if (TYPE != TYPE_OP || (VALUE.op != DECLARATOR && VALUE.op != VOID_FUNC))
     {
         parser->status = TYPE_ERROR;
         CompilationError(parser, ofs);
@@ -200,7 +197,7 @@ Node* GetArgs(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    CheckOpeningBracked(parser, ofs);
+    CheckOpeningRoundBracket(parser, ofs);
 
     Node* result = nullptr;
 
@@ -219,7 +216,7 @@ Node* GetArgs(Parser* parser, size_t* ofs)
         }
     }
 
-    CheckClosingBracked(parser, ofs);
+    CheckClosingRoundBracket(parser, ofs);
 
     return result;
 }
@@ -233,7 +230,7 @@ Node* GetCompound(Parser* parser, size_t* ofs)
     Node* result = ConstructNode(COMP_TYPE);
     Node* last = result;
 
-    while (TYPE != TYPE_OP || VALUE.op != BRACE2)
+    while (TYPE != TYPE_OP || VALUE.op != CLOSING_BRACE)
     {
         last->right = ConstructNode(STAT_TYPE, GetStatement(parser, ofs), nullptr);
         last->right->parent = last;
@@ -252,13 +249,21 @@ Node* GetStatement(Parser* parser, size_t* ofs)
     if (TYPE == TYPE_OP && VALUE.op == DECLARATOR) // Initialization
     {
         (*ofs)++;
+        if (NEXT_TYPE == TYPE_OP && NEXT_VALUE.op == OPENING_SQUARE_BRACKET)
+        {
+            Node* tmp = GetArrayDeclaration(parser, ofs);
+            CheckSemicolon(parser, ofs);
+            return tmp;
+        }
+
         Node* tmp = GetAssignment(parser, ofs);
         tmp->type = DECL_TYPE;
         CheckSemicolon(parser, ofs);
         return tmp;
     }
 
-    if (TYPE == TYPE_ID && NEXT_TYPE == TYPE_OP && NEXT_VALUE.op == ASSG) // assignment
+    if (TYPE == TYPE_ID && NEXT_TYPE == TYPE_OP &&
+       (NEXT_VALUE.op == ASSIGNMENT || NEXT_VALUE.op == OPENING_SQUARE_BRACKET))
     {
         Node* tmp = GetAssignment(parser, ofs);
         CheckSemicolon(parser, ofs);
@@ -287,16 +292,44 @@ Node* GetStatement(Parser* parser, size_t* ofs)
     return tmp;
 }
 
+Node* GetArrayDeclaration(Parser* parser, size_t* ofs)
+{
+    assert(parser);
+
+    Node* id = ID(nullptr, nullptr);
+    
+    CheckOpeningSquareBracket(parser, ofs);
+    Node* expression = GetExpression(parser, ofs);
+    CheckClosingSquareBracket(parser, ofs);
+        
+    return ConstructNode(ADECL_TYPE, id, expression);
+}
+
 Node* GetAssignment(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
+    Node* lval = GetLValue(parser, ofs);//ID(nullptr, nullptr);
     CheckAssigment(parser, ofs);
 
-    Node* var = ID(nullptr, nullptr);
-    (*ofs)++; /* to skip '=' */
+    return ConstructNode(ASSG_TYPE, lval, GetExpression(parser, ofs));
+}
 
-    return ConstructNode(ASSG_TYPE, var, GetExpression(parser, ofs));
+Node* GetLValue(Parser* parser, size_t* ofs)
+{
+    assert(parser);
+
+    Node* id = ID(nullptr, nullptr);
+
+    if (TYPE == TYPE_OP && VALUE.op == OPENING_SQUARE_BRACKET)
+    {
+        CheckOpeningSquareBracket(parser, ofs);
+        Node* expression = GetExpression(parser, ofs);
+        CheckClosingSquareBracket(parser, ofs);
+        return ConstructNode(MEM_ACCESS_TYPE, id, expression);
+    }
+
+    return id;
 }
 
 Node* GetExpression(Parser* parser, size_t* ofs)
@@ -354,21 +387,25 @@ Node* GetPrimaryExpression(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    if (TYPE == TYPE_OP && VALUE.op == RNDBR1)
+    if (TYPE == TYPE_OP && VALUE.op == OPENING_ROUND_BRACKET)
     {
-        CheckOpeningBracked(parser, ofs);
+        CheckOpeningRoundBracket(parser, ofs);
         Node* tmp = GetExpression(parser, ofs);
-        CheckClosingBracked(parser, ofs);
+        CheckClosingRoundBracket(parser, ofs);
 
         return tmp;
     }
 
     if (TYPE == TYPE_ID)
     {
-        if (NEXT_TYPE == TYPE_OP && NEXT_VALUE.op == RNDBR1) // call
+        if (NEXT_TYPE == TYPE_OP && NEXT_VALUE.op == OPENING_ROUND_BRACKET) // call
         {
             Node* tmp = ID(nullptr, nullptr);
             return ConstructNode(CALL_TYPE, tmp, GetParams(parser, ofs));             
+        }
+        else if (NEXT_TYPE == TYPE_OP && NEXT_VALUE.op == OPENING_SQUARE_BRACKET)
+        {
+            return GetMemoryAccess(parser, ofs);
         }
         else
         {
@@ -382,6 +419,18 @@ Node* GetPrimaryExpression(Parser* parser, size_t* ofs)
     return ConstructNode(NUMB_TYPE, { .number = val });
 }
 
+Node* GetMemoryAccess(Parser* parser, size_t* ofs)
+{
+    assert(parser);
+
+    Node* id = ID(nullptr, nullptr);
+    CheckOpeningSquareBracket(parser, ofs);
+    Node* expression = GetExpression(parser, ofs);
+    CheckClosingSquareBracket(parser, ofs);
+
+    return ConstructNode(MEM_ACCESS_TYPE, id, expression);
+}
+
 Node* GetJump(Parser* parser, size_t* ofs)
 {
     assert(parser);
@@ -389,7 +438,7 @@ Node* GetJump(Parser* parser, size_t* ofs)
     (*ofs)++;
 
     Node* tmp = nullptr;
-    if (TYPE != TYPE_OP && VALUE.op != SMCLN)
+    if (TYPE != TYPE_OP && VALUE.op != SEMICOLON)
     {
         tmp = GetExpression(parser, ofs);
     }
@@ -401,11 +450,11 @@ Node* GetParams(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    CheckOpeningBracked(parser, ofs);
+    CheckOpeningRoundBracket(parser, ofs);
 
     Node* result = nullptr;
 
-    if (TYPE != TYPE_OP || VALUE.op != RNDBR2)
+    if (TYPE != TYPE_OP || VALUE.op != CLOSING_ROUND_BRACKET)
     {
         result = ConstructNode(ARG_TYPE, GetExpression(parser, ofs), nullptr);
 
@@ -419,7 +468,7 @@ Node* GetParams(Parser* parser, size_t* ofs)
         }
     }
 
-    CheckClosingBracked(parser, ofs);
+    CheckClosingRoundBracket(parser, ofs);
 
     return result;
 }
@@ -430,9 +479,9 @@ Node* GetLoop(Parser* parser, size_t* ofs)
 
     (*ofs)++;
 
-    CheckOpeningBracked(parser, ofs);
+    CheckOpeningRoundBracket(parser, ofs);
     Node* result = ConstructNode(LOOP_TYPE, GetExpression(parser, ofs), nullptr);
-    CheckClosingBracked(parser, ofs);
+    CheckClosingRoundBracket(parser, ofs);
 
     result->right = GetCompound(parser, ofs);
     result->right->parent = result;
@@ -445,11 +494,11 @@ Node* GetCondition(Parser* parser, size_t* ofs)
     assert(parser);
 
     (*ofs)++;
-    CheckOpeningBracked(parser, ofs);
+    CheckOpeningRoundBracket(parser, ofs);
 
     Node* result = ConstructNode(COND_TYPE, GetExpression(parser, ofs), nullptr);
 
-    CheckClosingBracked(parser, ofs);
+    CheckClosingRoundBracket(parser, ofs);
 
     result->right = ConstructNode(IFEL_TYPE, GetCompound(parser, ofs), nullptr);
 
@@ -467,7 +516,7 @@ void CheckOpeningBrace(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    if (TYPE != TYPE_OP || VALUE.op != BRACE1)
+    if (TYPE != TYPE_OP || VALUE.op != OPENING_BRACE)
     {
         parser->status = MISSED_BRACE;
         CompilationError(parser, ofs);
@@ -480,7 +529,7 @@ void CheckClosingBrace(Parser* parser, size_t* ofs)
 {
     assert(parser);
  
-    if (TYPE != TYPE_OP || VALUE.op != BRACE2)
+    if (TYPE != TYPE_OP || VALUE.op != CLOSING_BRACE)
     {
         parser->status = MISSED_BRACE;
         CompilationError(parser, ofs);
@@ -489,11 +538,11 @@ void CheckClosingBrace(Parser* parser, size_t* ofs)
     (*ofs)++;
 }
 
-void CheckOpeningBracked(Parser* parser, size_t* ofs)
+void CheckOpeningRoundBracket(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    if (TYPE != TYPE_OP || VALUE.op != RNDBR1)
+    if (TYPE != TYPE_OP || VALUE.op != OPENING_ROUND_BRACKET)
     {
         parser->status = MISSED_BRACE;
         CompilationError(parser, ofs);
@@ -502,13 +551,39 @@ void CheckOpeningBracked(Parser* parser, size_t* ofs)
     (*ofs)++;
 }
 
-void CheckClosingBracked(Parser* parser, size_t* ofs)
+void CheckClosingRoundBracket(Parser* parser, size_t* ofs)
 {
     assert(parser);
  
-    if (TYPE != TYPE_OP || VALUE.op != RNDBR2)
+    if (TYPE != TYPE_OP || VALUE.op != CLOSING_ROUND_BRACKET)
     {
         parser->status = MISSED_BRACE;
+        CompilationError(parser, ofs);
+    }
+
+    (*ofs)++;
+}
+
+void CheckOpeningSquareBracket(Parser* parser, size_t* ofs)
+{
+    assert(parser);
+ 
+    if (TYPE != TYPE_OP || VALUE.op != OPENING_SQUARE_BRACKET)
+    {
+        parser->status = MISSED_BRACKET;
+        CompilationError(parser, ofs);
+    }
+
+    (*ofs)++;
+}
+
+void CheckClosingSquareBracket(Parser* parser, size_t* ofs)
+{
+    assert(parser);
+ 
+    if (TYPE != TYPE_OP || VALUE.op != CLOSING_SQUARE_BRACKET)
+    {
+        parser->status = MISSED_BRACKET;
         CompilationError(parser, ofs);
     }
 
@@ -519,7 +594,7 @@ void CheckSemicolon(Parser* parser, size_t* ofs)
 {
     assert(parser);
  
-    if (TYPE != TYPE_OP || VALUE.op != SMCLN)
+    if (TYPE != TYPE_OP || VALUE.op != SEMICOLON)
     {
         parser->status = MISSED_SMCLN;
         CompilationError(parser, ofs);
@@ -532,18 +607,20 @@ void CheckAssigment(Parser* parser, size_t* ofs)
 {
     assert(parser);
  
-    if (NEXT_TYPE != TYPE_OP || NEXT_VALUE.op != ASSG || TYPE != TYPE_ID)
+    if (TYPE != TYPE_OP || VALUE.op != ASSIGNMENT)
     {
         parser->status = ASSG_ERROR;
         CompilationError(parser, ofs);
     }
+
+    (*ofs)++;
 }
 
 bool IsComparison(Parser* parser, size_t* ofs)
 {
     assert(parser);
 
-    return TYPE == TYPE_OP && (VALUE.op == EQUAL || VALUE.op == NEQUAL ||
+    return TYPE == TYPE_OP && (VALUE.op == EQUAL || VALUE.op == NOT_EQUAL ||
                                VALUE.op == ABOVE || VALUE.op == EABOVE ||
                                VALUE.op == BELOW || VALUE.op == EBELOW);
 }
@@ -552,16 +629,16 @@ int MathTokenToNode(int op)
 {
     switch (op)
     {
-        case PLUS   : { return ADD_OP          ; }
-        case MINUS  : { return SUB_OP          ; }
-        case MUL    : { return MUL_OP          ; }
-        case DIV    : { return DIV_OP          ; }
-        case NEQUAL : { return NOT_EQUAL_OP    ; }
-        case EQUAL  : { return EQUAL_OP        ; }
-        case BELOW  : { return LESS_OP         ; }
-        case ABOVE  : { return GREATER_OP      ; }
-        case EBELOW : { return LESS_EQUAL_OP   ; }
-        case EABOVE : { return GREATER_EQUAL_OP; }
+        case PLUS      : { return ADD_OP          ; }
+        case MINUS     : { return SUB_OP          ; }
+        case MUL       : { return MUL_OP          ; }
+        case DIV       : { return DIV_OP          ; }
+        case NOT_EQUAL : { return NOT_EQUAL_OP    ; }
+        case EQUAL     : { return EQUAL_OP        ; }
+        case BELOW     : { return LESS_OP         ; }
+        case ABOVE     : { return GREATER_OP      ; }
+        case EBELOW    : { return LESS_EQUAL_OP   ; }
+        case EABOVE    : { return GREATER_EQUAL_OP; }
 
         default     : { return op              ; }
     }

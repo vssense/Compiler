@@ -2,8 +2,10 @@
 
 const char* ASM_FILE_NAME = "asm_tmp.nasm";
 
-static const char* SCAN  = "nepravdoi";
-static const char* PRINT = "govoru";
+#include "std_func.cpp"
+
+const char* SCAN  = "nepravdoi";
+const char* PRINT = "govoru";
 
 /////////////////////////////////////////////////////////////////
 //// NameTable
@@ -16,7 +18,7 @@ void       GetFunction      (Node* subtree, Function* function);
 size_t     GetNumArgs       (Node* node);
 size_t     GetNumVars       (Node* node);
 void       GetNames         (char** vars, Node* subtree);
-void       GetNewVars       (Node* node, char** vars, size_t* ofs);
+void       GetVars          (Node* node, char** vars, size_t ofs);
 void       DumpNameTable    (NameTable* table);
 Function*  FindFunc         (const char* name, NameTable* table);
 void       DestructNameTable(NameTable* table);
@@ -31,6 +33,7 @@ void WriteAsmStdData          (Compiler* compiler);
 void WriteAsmFunc             (Node* node, Compiler* compiler);
 void WriteAsmCompound         (Node* node, Compiler* compiler);
 void WriteAsmStatement        (Node* node, Compiler* compiler);
+void WriteAsmArrayDeclaration (Node* node, Compiler* compiler);
 void WriteAsmLoop             (Node* node, Compiler* compiler);
 void WriteAsmCondition        (Node* node, Compiler* compiler);
 void WriteAsmCall             (Node* node, Compiler* compiler);
@@ -39,13 +42,14 @@ void WriteAsmAssignment       (Node* node, Compiler* compiler);
 void WriteAsmExpression       (Node* node, Compiler* compiler);
 void WriteAsmSimpleExpression (Node* node, Compiler* compiler);
 void WriteAsmPrimaryExpression(Node* node, Compiler* compiler);
+void WriteAsmMemoryAccess     (Node* node, Compiler* compiler);
 void WriteAsmCompare          (Node* node, Compiler* compiler);
 int  GetVarOfs                (Function* function, char* name);
 
 
 #define ASM_ASSERT assert(node);               \
-                   assert(compiler->table);   \
-                   assert(compiler->file);    \
+                   assert(compiler->table);    \
+                   assert(compiler->file);     \
                    assert(compiler->function)
 
 #define FUNC      compiler->function
@@ -58,7 +62,7 @@ void Compile(const char* input)
 
     Parser* parser = Parse(input);
     Tree* tree = GetTree(parser);
-    TreeDump(tree);
+    // TreeDump(tree);
     Assemble(tree);
 
     DestructTree(tree);
@@ -73,7 +77,6 @@ void Assemble(Tree* tree)
     assert(tree);
 
     NameTable* table = MakeTableOfNames(tree);
-
     FILE* asm_file = fopen(ASM_FILE_NAME, "w");
     assert(asm_file);
 
@@ -122,37 +125,13 @@ void WriteAsmCode(Tree* tree, NameTable* table, FILE* file)
 
 void WriteAsmStdFunctions(Compiler* compiler)
 {
-    fprintf(ASM_FILE, "\nprint:                  \n\t"
-                      "mov rax, [rsp + 8]      \n\t"
-                      "mov rsi, IO_BUFFER + 15 \n\t"
-                      "mov byte [rsi], '0'     \n\t"
-                      "mov rbx, 10             \n\t"
-
-                    "print_while:              \n\t"
-                      "test rax, rax           \n\t"
-                      "jz print_while_end      \n\t"
-
-                      "cqo                     \n\t"
-                      "div rbx                 \n\t"
-                      "add rdx, '0'            \n\t"
-                      "mov byte [rsi], dl      \n\t"
-                      "dec rsi                 \n\t"
-                      "jmp print_while         \n\t"
-                    "print_while_end:          \n\t"
-
-                      "mov rdx, 16             \n\t"
-                      "mov rdi, 1              \n\t"
-                      "mov rax, 1              \n\t"
-                      "syscall                 \n\t"
-                      "ret                     \n\t");
+    fprintf(ASM_FILE, "%s", print_func);
+    fprintf(ASM_FILE, "%s", scan_func);
 }
 
 void WriteAsmStdData(Compiler* compiler)
 {
-    fprintf(ASM_FILE, "section .data  \n\t"
-                      "IO_BUFFER:     \n\t"
-                      "times 16 db 0  \n\t"
-                      "         db ' '\n\t");
+    fprintf(ASM_FILE, "%s", asm_data);
 }
 
 void WriteAsmFunc(Node* node, Compiler* compiler)
@@ -162,7 +141,7 @@ void WriteAsmFunc(Node* node, Compiler* compiler)
     fprintf(ASM_FILE, "\n%s :       \n\t", node->value.name);
     fprintf(ASM_FILE, "push rbp     \n\t"
                       "mov  rbp, rsp\n\t"
-                      "sub  rsp, %lu\n\t", FUNC->num_vars * 8);
+                      "sub  rsp, %lu\n\t", (FUNC->num_vars) * 8);
 
     WriteAsmCompound(node->left->right, compiler);
 }
@@ -192,6 +171,11 @@ void WriteAsmStatement(Node* node, Compiler* compiler)
         case DECL_TYPE :
         {
             WriteAsmAssignment(node, compiler);
+            break;
+        }
+        case ADECL_TYPE :
+        {
+            WriteAsmArrayDeclaration(node, compiler);
             break;
         }
         case ASSG_TYPE :
@@ -235,21 +219,34 @@ void WriteAsmStatement(Node* node, Compiler* compiler)
     }
 }
 
+void WriteAsmArrayDeclaration(Node* node, Compiler* compiler)
+{
+    ASM_ASSERT;
+
+    WriteAsmExpression(node->right, compiler);
+    fprintf(ASM_FILE, "mov [rbp + %d], rsp\n\t"
+                      "pop  rax           \n\t"
+                      "sal  rax, 3        \n\t" // * sizeof(long long) 
+                      "sub  rsp, rax      \n\t",
+                      GetVarOfs(FUNC, node->left->value.name));
+}
+
 void WriteAsmLoop(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
     size_t label = LABEL++;
 
-    fprintf(ASM_FILE, "LOOP_%lu :\n\t", label);
+    fprintf(ASM_FILE, "LOOP_%lu :  ;while\n\t", label);
     WriteAsmExpression(node->left, compiler);
 
-    fprintf(ASM_FILE, "push 0         \n\t"
-                      "je CONTINUE_%lu\n\t", label);
+    fprintf(ASM_FILE, "pop  rax       \n\t"
+                      "test rax, rax  \n\t"
+                      "jz CONTINUE_%lu\n\t", label);
 
     WriteAsmCompound(node->right->right, compiler);
 
-    fprintf(ASM_FILE, "jmp LOOP_%lu  \n"
+    fprintf(ASM_FILE, "jmp LOOP_%lu ;while_end \n"
                       "CONTINUE_%lu :\n\t", label, label);
 }
 
@@ -263,9 +260,9 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
 
     fprintf(ASM_FILE, "pop  rax      \n\t"
                       "test rax, rax \n\t"
-                      "jnz  TRUE_%lu \n\t"
+                      "jnz  TRUE_%lu ;if\n\t"
                       "jmp  FALSE_%lu\n"
-                      "TRUE_%lu :   \n\t", label, label, label);
+                      "TRUE_%lu :    \n\t", label, label, label);
 
     WriteAsmCompound(node->right->left->right, compiler);
 
@@ -277,7 +274,7 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
         WriteAsmCompound(node->right->right->right, compiler);
     }
 
-    fprintf(ASM_FILE, "CONTINUE_%lu :\n\t", label);
+    fprintf(ASM_FILE, "CONTINUE_%lu : ;if_end\n\t", label);
 }
 
 void WriteAsmAssignment(Node* node, Compiler* compiler)
@@ -285,6 +282,19 @@ void WriteAsmAssignment(Node* node, Compiler* compiler)
     ASM_ASSERT;
 
     WriteAsmExpression(node->right, compiler);
+
+    if (node->left->type == MEM_ACCESS_TYPE)
+    {
+        WriteAsmExpression(node->left->right, compiler);
+        fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
+                          "pop  rbx            \n\t"
+                          "sal  rbx, 3         \n\t"
+                          "sub  rax, rbx       \n\t"
+                          "pop  rbx            \n\t"
+                          "mov [rax], rbx      \n\t",
+                          GetVarOfs(FUNC, node->left->left->value.name));    
+        return;
+    }
 
     fprintf(ASM_FILE, "pop  rax\n\t"
                       "mov [rbp + %d], rax\n\t", GetVarOfs(FUNC, node->left->value.name));
@@ -376,13 +386,18 @@ void WriteAsmPrimaryExpression(Node* node, Compiler* compiler)
         case ID_TYPE :
         {
             fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
-                              "push rax            \n\t",
-                               GetVarOfs(FUNC, node->value.name));
+                              "push rax     ;!%s    \n\t",//!!!
+                               GetVarOfs(FUNC, node->value.name), node->value.name);
             break;
         }
         case NUMB_TYPE :
         {
             fprintf(ASM_FILE, "push %d\n\t", node->value.number);
+            break;
+        }
+        case MEM_ACCESS_TYPE :
+        {
+            WriteAsmMemoryAccess(node, compiler);
             break;
         }
         case CALL_TYPE :
@@ -395,6 +410,20 @@ void WriteAsmPrimaryExpression(Node* node, Compiler* compiler)
             printf("I am here, but I shouldn't, line = %d\n", __LINE__);
         }
     }
+}
+
+void WriteAsmMemoryAccess(Node* node, Compiler* compiler)
+{
+    ASM_ASSERT;
+
+    WriteAsmExpression(node->right, compiler);
+    fprintf(ASM_FILE, "mov  rax, [rbp + %d] ;arr = %s\n\t"
+                      "pop  rbx            \n\t"
+                      "sal  rbx, 3         \n\t"
+                      "sub  rax, rbx       \n\t"
+                      "mov  rax, [rax]     \n\t"
+                      "push rax            \n\t",
+                      GetVarOfs(FUNC, node->left->value.name), node->left->value.name);//!!!
 }
 
 void WriteAsmCall(Node* node, Compiler* compiler)
@@ -428,7 +457,7 @@ void WriteAsmCall(Node* node, Compiler* compiler)
         }
 
         fprintf(ASM_FILE, "call %s\n\t"
-                          "add rsp, %lu\n\t", call_func->name, call_func->num_args * 8);
+                          "add  rsp, %lu\n\t", call_func->name, call_func->num_args * 8);
         if (!call_func->is_void)
         {
             fprintf(ASM_FILE, "push rax\n\t");
@@ -481,7 +510,7 @@ void WriteAsmCompare(Node* node, Compiler* compiler)
 
     fprintf(ASM_FILE, "pop  rax\n\t"
                       "pop  rbx\n\t"
-                      "cmp  rbx, rax\n\t"); //!!! might be rbx, rax
+                      "cmp  rbx, rax\n\t");
 
     switch (node->value.op)
     {
@@ -527,7 +556,7 @@ void WriteAsmCompare(Node* node, Compiler* compiler)
                       "CONTINUE_%lu :  \n\t", label, label, label, label);
 }
 
-int GetVarOfs(Function* function, char* name)//!!!
+int GetVarOfs(Function* function, char* name)
 {
     assert(function);
     assert(name);
@@ -544,12 +573,12 @@ int GetVarOfs(Function* function, char* name)//!!!
     {
         if (strcmp(function->vars[i], name) == 0)
         {
-            return - (i + 1) * 8;
+            return - (i - function->num_args + 1) * 8;
         }
     }
     
     printf("error : '%s' wasn't declarated here\n", name);
-    return -1;
+    return -0xFFFFFFFF;
 }
 
 NameTable* MakeTableOfNames(Tree* tree)
@@ -658,17 +687,19 @@ size_t GetNumArgs(Node* node)
 
 size_t GetNumVars(Node* node)
 {
-    if (node == nullptr) 
+    size_t num = 0;
+
+    while (node != nullptr)
     {
-        return 0;
+        if (node->left->type == DECL_TYPE || node->left->type == ADECL_TYPE)
+        {
+            num++;
+        }
+
+        node = node->right;
     }
 
-    if (node->type == DECL_TYPE)
-    {
-        return 1 + GetNumVars(node->left) + GetNumVars(node->right);
-    }
-
-    return GetNumVars(node->left) + GetNumVars(node->right);
+    return num;
 }
 
 void GetNames(char** vars, Node* subtree)
@@ -687,29 +718,22 @@ void GetNames(char** vars, Node* subtree)
         arg = arg->right;
     }
 
-    GetNewVars(subtree->left->right, vars, &ofs);
+    GetVars(subtree->left->right, vars, ofs);
 }
 
-void GetNewVars(Node* node, char** vars, size_t* ofs)
+void GetVars(Node* node, char** vars, size_t ofs)
 {
     assert(vars);
-    assert(ofs);
 
-    if (node == nullptr)
+    while (node != nullptr)
     {
-        return;
+        if (node->left->type == DECL_TYPE || node->left->type == ADECL_TYPE)
+        {
+            vars[ofs++] = node->left->left->value.name;
+        }
+
+        node = node->right;
     }
-
-    GetNewVars(node->left, vars, ofs);
-
-    if (node->type == DECL_TYPE)
-    {
-        vars[*ofs] = node->left->value.name;
-        (*ofs)++;
-        return;
-    }
-
-    GetNewVars(node->right, vars, ofs);
 }
 
 void DumpNameTable(NameTable* table)
@@ -719,18 +743,18 @@ void DumpNameTable(NameTable* table)
     for (size_t i = 0; i < table->num_func; ++i)
     {
         printf("\n%s :\n", table->functions[i].name);
-        printf("\tparams : ");
+        printf("\tparams(%lu) : ", table->functions[i].num_args);
 
         for (size_t j = 0; j < table->functions[i].num_args; ++j)
         {
-            printf("%s, ", table->functions[i].vars[j]);
+            printf("%s[%d], ", table->functions[i].vars[j], GetVarOfs(table->functions + i, table->functions[i].vars[j]));
         }
-        printf("\n\tvars : ");
+        printf("\n\tvars(%lu) : ", table->functions[i].num_vars);
 
         for (size_t j = table->functions[i].num_args; j < table->functions[i].num_args + 
                                                           table->functions[i].num_vars; ++j)
         {
-            printf("%s, ", table->functions[i].vars[j]);
+            printf("%s[%d], ", table->functions[i].vars[j], GetVarOfs(table->functions + i, table->functions[i].vars[j]));
         }
     }
 }

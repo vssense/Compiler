@@ -7,7 +7,7 @@ size_t  LenOfFile        (FILE* file);
 Buffer* ReadFile         (FILE* file);
 size_t  FillTokens       (Token* tokens, Buffer* buffer);
 Token*  NewTokensBuffer  ();
-void    PrintError       (ERROR error);
+void    PrintError       (Error error);
 void    PrintBeforeSymbol(char* str, char symbol);
 void    CompilationError (Parser* parser, size_t* idx);
 void    GetNumber        (Token* tokens, size_t* ofs, Buffer* buffer);
@@ -69,7 +69,7 @@ Token* NewTokensBuffer()
     return tokens;
 }
 
-void PrintError(ERROR error)
+void PrintError(Error error)
 {
     switch (error)
     {
@@ -97,6 +97,11 @@ void PrintError(ERROR error)
         {
             printf("missed semicolon\n");
             break;   
+        }
+        case MISSED_BRACKET:
+        {
+            printf("missed square bracket\n");
+            break;
         }
         case ASSG_ERROR :
         {
@@ -127,7 +132,6 @@ void CompilationError(Parser* parser, size_t* idx)
     printf("Compilation error : ");
 
     PrintError(parser->status);
-
 
     char* str_start = parser->tokens[*idx].token_str;
     printf("%s\n", str_start);
@@ -312,6 +316,7 @@ void ParserDump(Parser* parser)
 
     for (size_t i = 0; i < parser->size; ++i)
     {
+        printf("[%lu] ", i);
         switch (parser->tokens[i].type)
         {
             case TYPE_NUMB :
@@ -321,12 +326,12 @@ void ParserDump(Parser* parser)
             }
             case TYPE_ID :
             {
-                printf("type ID,       value = %s\n", parser->tokens[i].value.name);
+                printf("type ID,       value = '%s'\n", parser->tokens[i].value.name);
                 break;
             }
             case TYPE_OP :
             {
-                printf("type operator, value = %s\n", OPERATORS[parser->tokens[i].value.op].name);
+                printf("type operator, value = '%s'[%d]\n", OPERATORS[parser->tokens[i].value.op].name, parser->tokens[i].value.op);
                 break;
             }
             default :
