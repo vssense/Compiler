@@ -6,7 +6,7 @@ struct Function
 
     char** vars;
 
-    bool is_void;
+    bool   is_void;
     size_t num_args;
     size_t num_vars;
 };
@@ -21,7 +21,7 @@ struct NameTable
 struct Compiler
 {
     NameTable* table;
-    Function* function;
+    Function*  function;
 
     FILE* file;
 

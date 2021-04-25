@@ -78,7 +78,7 @@ void Compile(const int argc, const char** argv)
     }
 
     Tree* tree = GetTree(parser);
-    if (info.dot_dump_required)
+    if (info.tree_dump_required)
     {
         TreeDump(tree);
     }

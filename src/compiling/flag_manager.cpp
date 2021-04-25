@@ -2,15 +2,16 @@
 
 const char* flags[] =
 {
-    "-h", "-o", "-dot-dump", "-nametable-dump", "-parser-dump"
+    "-h", "-o", "-parser-dump", "-tree-dump", "-nametable-dump", "-S"
 };
 
 const char* help_message = "use flags:\n"
-                 "      -h               display help\n"
-                 "      -o               next arg is a name of output file\n"
-                 "      -parser-dump     show all tokens and their types\n"
+                 "      -h               display help                           \n"
+                 "      -o               next arg is a name of output file      \n"
+                 "      -parser-dump     show all tokens and their types        \n"
+                 "      -tree-dump       show tree of program using dot         \n"
                  "      -nametable-dump  show info about functions and variables\n"
-                 "      -dot-dump        show tree of program using dot\n";
+                 "      -S               show nasm code of your program         \n";
 
 void GetFlag(const char** argv, FlagInfo* info, int* offset)
 {
@@ -27,15 +28,19 @@ void GetFlag(const char** argv, FlagInfo* info, int* offset)
     }
     else if (strcmp(argv[*offset], flags[2]) == 0)
     {
-        info->dot_dump_required = true;
+        info->parser_dump_required = true;
     }
     else if (strcmp(argv[*offset], flags[3]) == 0)
     {
-        info->nametable_dump_required = true;
+        info->tree_dump_required = true;
     }
     else if (strcmp(argv[*offset], flags[4]) == 0)
     {
-        info->parser_dump_required = true;
+        info->nametable_dump_required = true;
+    }
+    else if (strcmp(argv[*offset], flags[5]))
+    {
+        info->asm_listing_required = true;
     }
     else
     {
