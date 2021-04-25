@@ -6,15 +6,16 @@ bin = bin
 
 input = input.txt
 
-compile : run
-	$(bin)/assembler.exe asm_tmp.txt
-	$(bin)/processor.exe $(bin)/work_file.bin
+default : $(bin)/compiler
 
-run : $(bin)/compilier.exe
-	$(bin)/compilier.exe $(input)
+run : $(bin)/compiler
+	$(bin)/compiler $(input)
 
-$(bin)/compilier.exe : $(bin)/parser.o $(bin)/tree.o $(bin)/compiling.o $(src)/main.cpp
-	$(GPP) $(src)/main.cpp $(bin)/parser.o $(bin)/tree.o $(bin)/compiling.o -o $(bin)/compilier.exe $(options)
+$(bin)/compiler : $(bin)/parser.o $(bin)/tree.o $(bin)/flag_manager.o $(bin)/compiling.o $(src)/main.cpp
+	$(GPP) $(src)/main.cpp $(bin)/parser.o $(bin)/flag_manager.o $(bin)/tree.o $(bin)/compiling.o -o $(bin)/compiler $(options)
+
+$(bin)/flag_manager.o : $(src)/compiling/flag_manager.cpp $(src)/compiling/flag_manager.h
+	$(GPP) -c $(src)/compiling/flag_manager.cpp -o $(bin)/flag_manager.o $(options)
 
 $(bin)/parser.o : $(src)/tree/parser.cpp $(src)/tree/parser.h
 	$(GPP) -c $(src)/tree/parser.cpp -o $(bin)/parser.o $(options)

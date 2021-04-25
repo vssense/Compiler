@@ -1,4 +1,5 @@
 #include "compiling.h"
+#include "flag_manager.h"
 
 const char* ASM_FILE_NAME = "asm_tmp.nasm";
 
@@ -18,8 +19,8 @@ void       GetFunction      (Node* subtree, Function* function);
 size_t     GetNumArgs       (Node* node);
 size_t     GetNumVars       (Node* node);
 void       GetNames         (char** vars, Node* subtree);
-void       GetVars          (Node* node, char** vars, size_t ofs);
-void       DumpNameTable    (NameTable* table);
+void       GetVars          (Node* node, char** vars, size_t* ofs);
+void       NameTableDump    (NameTable* table);
 Function*  FindFunc         (const char* name, NameTable* table);
 void       DestructNameTable(NameTable* table);
 void       DeleteNameTable  (NameTable* table);
@@ -27,6 +28,7 @@ void       DeleteNameTable  (NameTable* table);
 /////////////////////////////////////////////////////////////////
 ///// Assemble
 /////////////////////////////////////////////////////////////////
+void Assemble                 (Tree* tree, FlagInfo* info);
 void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file);
 void WriteAsmStdFunctions     (Compiler* compiler);
 void WriteAsmStdData          (Compiler* compiler);
@@ -56,14 +58,32 @@ int  GetVarOfs                (Function* function, char* name);
 #define ASM_FILE  compiler->file
 #define LABEL     compiler->label
 
-void Compile(const char* input)
+void Compile(const int argc, const char** argv)
 {
-    assert(input);
+    assert(argv);
 
-    Parser* parser = Parse(input);
+    FlagInfo info = {};
+    GetFlagInfo(argc, argv, &info);
+
+    if (info.input_file == nullptr)
+    {
+        printf("error : no input file\n");
+        return;
+    }
+
+    Parser* parser = Parse(info.input_file);
+    if (info.parser_dump_required)
+    {
+        ParserDump(parser);
+    }
+
     Tree* tree = GetTree(parser);
-    // TreeDump(tree);
-    Assemble(tree);
+    if (info.dot_dump_required)
+    {
+        TreeDump(tree);
+    }
+
+    Assemble(tree, &info);
 
     DestructTree(tree);
     DeleteTree(tree);
@@ -72,11 +92,16 @@ void Compile(const char* input)
     DeleteParser(parser);    
 }
 
-void Assemble(Tree* tree)
+void Assemble(Tree* tree, FlagInfo* info)
 {
     assert(tree);
 
     NameTable* table = MakeTableOfNames(tree);
+    if (info->nametable_dump_required)
+    {
+        NameTableDump(table);
+    }
+
     FILE* asm_file = fopen(ASM_FILE_NAME, "w");
     assert(asm_file);
 
@@ -144,6 +169,10 @@ void WriteAsmFunc(Node* node, Compiler* compiler)
                       "sub  rsp, %lu\n\t", (FUNC->num_vars) * 8);
 
     WriteAsmCompound(node->left->right, compiler);
+
+    fprintf(ASM_FILE, "mov  rsp, rbp\n\t"
+                      "pop  rbp     \n\t"
+                      "ret          \n\t");
 }
 
 void WriteAsmCompound(Node* node, Compiler* compiler)
@@ -661,8 +690,8 @@ void GetFunction(Node* subtree, Function* function)
     assert(subtree);
     assert(function);
 
-    function->name    = subtree->value.name;
-    function->is_void = subtree->parent->value.is_void;
+    function->name     = subtree->value.name;
+    function->is_void  = subtree->parent->value.is_void;
 
     function->num_args = GetNumArgs(subtree->right);
     function->num_vars = GetNumVars(subtree->left->right);
@@ -687,19 +716,19 @@ size_t GetNumArgs(Node* node)
 
 size_t GetNumVars(Node* node)
 {
-    size_t num = 0;
-
-    while (node != nullptr)
+    if (node == nullptr)
     {
-        if (node->left->type == DECL_TYPE || node->left->type == ADECL_TYPE)
-        {
-            num++;
-        }
-
-        node = node->right;
+        return 0;
     }
 
-    return num;
+    int num = 0;
+
+    if (node->type == DECL_TYPE || node->type == ADECL_TYPE)
+    {
+        num = 1;
+    }
+
+    return num + GetNumVars(node->left) + GetNumVars(node->right);
 }
 
 void GetNames(char** vars, Node* subtree)
@@ -718,25 +747,28 @@ void GetNames(char** vars, Node* subtree)
         arg = arg->right;
     }
 
-    GetVars(subtree->left->right, vars, ofs);
+    GetVars(subtree->left->right, vars, &ofs);
 }
 
-void GetVars(Node* node, char** vars, size_t ofs)
+void GetVars(Node* node, char** vars, size_t* ofs)
 {
     assert(vars);
 
-    while (node != nullptr)
+    if (node == nullptr)
     {
-        if (node->left->type == DECL_TYPE || node->left->type == ADECL_TYPE)
-        {
-            vars[ofs++] = node->left->left->value.name;
-        }
-
-        node = node->right;
+        return;
     }
+
+    if (node->type == DECL_TYPE || node->type == ADECL_TYPE)
+    {
+        vars[(*ofs)++] = node->left->value.name;
+    }
+
+    GetVars(node->right, vars, ofs);
+    GetVars(node->left,  vars, ofs);
 }
 
-void DumpNameTable(NameTable* table)
+void NameTableDump(NameTable* table)
 {
     assert(table);
 

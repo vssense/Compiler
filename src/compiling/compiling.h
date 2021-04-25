@@ -30,5 +30,4 @@ struct Compiler
 
 NameTable* MakeTableOfNames(Tree* tree);
 void       DumpNameTable   (NameTable* table);
-void       Assemble        (Tree* tree);
-void       Compile         (const char* input);
+void       Compile         (const int argc, const char** argv);

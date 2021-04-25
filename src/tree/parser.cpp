@@ -54,7 +54,7 @@ Buffer* GetBuffer(const char* input)
     FILE* file = fopen(input, "r");
     if (!file) 
     {
-        printf("Error : no such file \"%s\"\n", input);
+        printf("error : no such file \"%s\"\n", input);
         assert(!"no input file\n");
     }
 
