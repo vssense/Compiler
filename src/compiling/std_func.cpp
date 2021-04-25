@@ -3,6 +3,8 @@ const char* print_func = "\nprint:                \n\t"
                          "mov rsi, IO_BUFFER + 15 \n\t"
                 
                          "xor rdi, rdi            \n\t"
+                         "mov [IO_BUFFER], rdi    \n\t"
+                         "mov [IO_BUFFER + 8], rdi\n\t"
                          "mov rax, [rsp + 8]      \n\t"
                          "cmp rax, 0              \n\t"
                          "jge print_continue      \n\t"
