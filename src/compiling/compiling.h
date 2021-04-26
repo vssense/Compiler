@@ -1,4 +1,12 @@
+#ifndef COMPILING_H
+#define COMPILING_H
+
 #include "../tree/tree.h"
+
+enum Jumps
+{
+    
+};
 
 struct Function
 {
@@ -26,8 +34,12 @@ struct Compiler
     FILE* file;
 
     size_t label;
+
+    bool asm_listing_required;
 };
 
 NameTable* MakeTableOfNames(Tree* tree);
 void       DumpNameTable   (NameTable* table);
 void       Compile         (const int argc, const char** argv);
+
+#endif

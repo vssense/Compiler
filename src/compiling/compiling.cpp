@@ -1,5 +1,6 @@
 #include "compiling.h"
 #include "flag_manager.h"
+#include "byte_code.h"
 
 const char* ASM_FILE_NAME = "asm_tmp.nasm";
 
@@ -29,7 +30,7 @@ void       DeleteNameTable  (NameTable* table);
 ///// Assemble
 /////////////////////////////////////////////////////////////////
 void Assemble                 (Tree* tree, FlagInfo* info);
-void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file);
+void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, bool asm_listing_required);
 void WriteAsmStdFunctions     (Compiler* compiler);
 void WriteAsmStdData          (Compiler* compiler);
 void WriteAsmFunc             (Node* node, Compiler* compiler);
@@ -88,8 +89,8 @@ void Compile(const int argc, const char** argv)
     DestructTree(tree);
     DeleteTree(tree);
 
-    DestructParser(parser);    
-    DeleteParser(parser);    
+    DestructParser(parser);
+    DeleteParser(parser);
 }
 
 void Assemble(Tree* tree, FlagInfo* info)
@@ -105,23 +106,24 @@ void Assemble(Tree* tree, FlagInfo* info)
     FILE* asm_file = fopen(ASM_FILE_NAME, "w");
     assert(asm_file);
 
-    WriteAsmCode(tree, table, asm_file);
+    WriteAsmCode(tree, table, asm_file, info->asm_listing_required);
  
     fclose(asm_file);
 }
 
-void WriteAsmCode(Tree* tree, NameTable* table, FILE* file)
+void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, bool asm_listing_required)
 {
     assert(tree);
     assert(file);
 
     Node* node = tree->root;
 
-    Compiler compiler = {};
-    compiler.table     = table;
-    compiler.function  = table->functions;
-    compiler.file      = file;
-    compiler.label     = 0;
+    Compiler compiler             = {};
+    compiler.table                = table;
+    compiler.function             = table->functions;
+    compiler.file                 = file;
+    compiler.label                = 0;
+    compiler.asm_listing_required = asm_listing_required;
 
     fprintf(file, "section .text\n"
                   "global _start\n\n");
@@ -164,15 +166,24 @@ void WriteAsmFunc(Node* node, Compiler* compiler)
     ASM_ASSERT;
 
     fprintf(ASM_FILE, "\n%s :       \n\t", node->value.name);
-    fprintf(ASM_FILE, "push rbp     \n\t"
-                      "mov  rbp, rsp\n\t"
-                      "sub  rsp, %lu\n\t", (FUNC->num_vars) * 8);
+
+    WritePushR64  (compiler, RBP);
+    WriteMovR64R64(compiler, RBP, RSP);
+    WriteSubR64Num(compiler, RSP, FUNC->num_vars * 8);
+
+    // fprintf(ASM_FILE, "push rbp     \n\t"
+    //                   "mov  rbp, rsp\n\t"
+    //                   "sub  rsp, %lu\n\t", FUNC->num_vars * 8);
 
     WriteAsmCompound(node->left->right, compiler);
 
-    fprintf(ASM_FILE, "mov  rsp, rbp\n\t"
-                      "pop  rbp     \n\t"
-                      "ret          \n\t");
+    WriteMovR64R64(compiler, RSP, RBP);
+    WritePopR64   (compiler, RBP);
+    WriteRet      (compiler);
+
+    // fprintf(ASM_FILE, "mov  rsp, rbp\n\t"
+    //                   "pop  rbp     \n\t"
+    //                   "ret          \n\t");
 }
 
 void WriteAsmCompound(Node* node, Compiler* compiler)
@@ -217,12 +228,17 @@ void WriteAsmStatement(Node* node, Compiler* compiler)
             if (!FUNC->is_void)
             {
                 WriteAsmExpression(node->right, compiler);
-                fprintf(ASM_FILE, "pop  rax\n\t");
+                WritePopR64(compiler, RAX);
+                // fprintf(ASM_FILE, "pop  rax\n\t");
             }
 
-            fprintf(ASM_FILE, "mov  rsp, rbp\n\t"
-                              "pop  rbp     \n\t"
-                              "ret          \n\t");
+            WriteMovR64R64(compiler, RSP, RBP);
+            WritePopR64   (compiler, RBP);
+            WriteRet      (compiler);
+
+            // fprintf(ASM_FILE, "mov  rsp, rbp\n\t"
+            //                   "pop  rbp     \n\t"
+            //                   "ret          \n\t");
             break;
         }
         case COND_TYPE :
@@ -253,30 +269,46 @@ void WriteAsmArrayDeclaration(Node* node, Compiler* compiler)
     ASM_ASSERT;
 
     WriteAsmExpression(node->right, compiler);
-    fprintf(ASM_FILE, "mov [rbp + %d], rsp\n\t"
-                      "pop  rax           \n\t"
-                      "sal  rax, 3        \n\t" // * sizeof(long long) 
-                      "sub  rsp, rax      \n\t",
-                      GetVarOfs(FUNC, node->left->value.name));
+
+    WriteMovMemR64(compiler, RBP, RSP, GetVarOfs(FUNC, node->left->value.name));
+    WritePopR64   (compiler, RAX);
+    WriteSalR64   (compiler, RAX, 3); //sizeof(int64_t)
+    WriteSubR64R64(compiler, RSP, RAX);
+
+    // fprintf(ASM_FILE, "mov [rbp + %d], rsp\n\t"
+    //                   "pop  rax           \n\t"
+    //                   "sal  rax, 3        \n\t" // * sizeof(int64_t) 
+    //                   "sub  rsp, rax      \n\t",
+    //                   GetVarOfs(FUNC, node->left->value.name));
 }
 
 void WriteAsmLoop(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    size_t label = LABEL++;
+    size_t loop_label = LABEL++;
+    size_t continue_label = LABEL++;
 
-    fprintf(ASM_FILE, "LOOP_%lu :  ;while\n\t", label);
+    WriteLabel(compiler, loop_label);
+
+    // fprintf(ASM_FILE, "L%lu :  ;while\n\t", loop_label);
     WriteAsmExpression(node->left, compiler);
 
-    fprintf(ASM_FILE, "pop  rax       \n\t"
-                      "test rax, rax  \n\t"
-                      "jz CONTINUE_%lu\n\t", label);
+    WritePopR64(compiler, RAX);
+    WriteTest  (compiler, RAX, RAX);
+    WriteJumpOp(compiler, EQUAL_OP, continue_label); //!!!there is should be jz
+
+    // fprintf(ASM_FILE, "pop  rax      \n\t"
+    //                   "test rax, rax \n\t"
+    //                   "jz L%lu\n\t", continue_label);
 
     WriteAsmCompound(node->right->right, compiler);
 
-    fprintf(ASM_FILE, "jmp LOOP_%lu ;while_end \n"
-                      "CONTINUE_%lu :\n\t", label, label);
+    WriteJump (compiler, loop_label);
+    WriteLabel(compiler, continue_label);
+
+    // fprintf(ASM_FILE, "jmp L%lu ;while_end \n"
+    //                   "L%lu :              \n\t", loop_label, continue_label);
 }
 
 void WriteAsmCondition(Node* node, Compiler* compiler)
@@ -285,25 +317,38 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
 
     WriteAsmExpression(node->left, compiler);
 
-    size_t label = LABEL++;
+    size_t true_label = LABEL++;
+    size_t false_label = LABEL++;
+    size_t continue_label = LABEL++;
 
-    fprintf(ASM_FILE, "pop  rax      \n\t"
-                      "test rax, rax \n\t"
-                      "jnz  TRUE_%lu ;if\n\t"
-                      "jmp  FALSE_%lu\n"
-                      "TRUE_%lu :    \n\t", label, label, label);
+    WritePopR64(compiler, RAX);
+    WriteTest  (compiler, RAX, RAX);
+    WriteJumpOp(compiler, NOT_EQUAL_OP, true_label); //!!! should be jnz
+    WriteJump  (compiler, false_label);
+    WriteLabel (compiler, true_label);
+
+    // fprintf(ASM_FILE, "pop  rax     \n\t"
+    //                   "test rax, rax\n\t"
+    //                   "jnz  L%lu ;if\n\t"
+    //                   "jmp  L%lu    \n"
+    //                   "L%lu :       \n\t", true_label, false_label, true_label);
 
     WriteAsmCompound(node->right->left->right, compiler);
 
-    fprintf(ASM_FILE, "jmp CONTINUE_%lu\n"
-                      "FALSE_%lu :     \n\t", label, label);
+    WriteJump(compiler, continue_label);
+    WriteLabel(compiler, false_label);
+
+    // fprintf(ASM_FILE, "jmp L%lu\n"
+    //                   "L%lu :     \n\t", continue_label, false_label);
 
     if (node->right->right != nullptr)
     {
         WriteAsmCompound(node->right->right->right, compiler);
     }
 
-    fprintf(ASM_FILE, "CONTINUE_%lu : ;if_end\n\t", label);
+    WriteLabel(compiler, continue_label);
+
+    // fprintf(ASM_FILE, "L%lu : ;if_end\n\t", continue_label);
 }
 
 void WriteAsmAssignment(Node* node, Compiler* compiler)
@@ -315,18 +360,29 @@ void WriteAsmAssignment(Node* node, Compiler* compiler)
     if (node->left->type == MEM_ACCESS_TYPE)
     {
         WriteAsmExpression(node->left->right, compiler);
-        fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
-                          "pop  rbx            \n\t"
-                          "sal  rbx, 3         \n\t"
-                          "sub  rax, rbx       \n\t"
-                          "pop  rbx            \n\t"
-                          "mov [rax], rbx      \n\t",
-                          GetVarOfs(FUNC, node->left->left->value.name));    
+
+        WriteMovR64Mem(compiler, RAX, RBP, GetVarOfs(FUNC, node->left->left->value.name));
+        WritePopR64   (compiler, RBX);
+        WriteSalR64   (compiler, RBX, 3);    //sizeof(int64_t)
+        WriteSubR64R64(compiler, RAX, RBX);
+        WritePopR64   (compiler, RBX);
+        WriteMovMemR64(compiler, RAX, RBX);
+
+        // fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
+        //                   "pop  rbx            \n\t"
+        //                   "sal  rbx, 3         \n\t"
+        //                   "sub  rax, rbx       \n\t"
+        //                   "pop  rbx            \n\t"
+        //                   "mov [rax], rbx      \n\t",
+        //                   GetVarOfs(FUNC, node->left->left->value.name));    
         return;
     }
 
-    fprintf(ASM_FILE, "pop  rax\n\t"
-                      "mov [rbp + %d], rax\n\t", GetVarOfs(FUNC, node->left->value.name));
+    WritePopR64   (compiler, RAX);
+    WriteMovMemR64(compiler, RBP, RAX, GetVarOfs(FUNC, node->left->value.name));
+
+    // fprintf(ASM_FILE, "pop  rax\n\t"
+    //                   "mov [rbp + %d], rax\n\t", GetVarOfs(FUNC, node->left->value.name));
 }
 
 void WriteAsmExpression(Node* node, Compiler* compiler)
@@ -359,39 +415,37 @@ void WriteAsmSimpleExpression(Node* node, Compiler* compiler)
         WriteAsmSimpleExpression(node->left,  compiler);
         WriteAsmSimpleExpression(node->right, compiler);
         
+        WritePopR64(compiler, RBX);
+        WritePopR64(compiler, RAX);
+
+        // fprintf(ASM_FILE, "pop  rbx\n\t"
+        //                   "pop  rax\n\t");
+
         switch (node->value.op)
         {
-            case MUL_OP :
-            {
-                fprintf(ASM_FILE, "pop  rbx\n\t"
-                                  "pop  rax\n\t"
-                                  "imul rbx\n\t"
-                                  "push rax\n\t");
-                break;
-            }
-            case DIV_OP :
-            {   
-                fprintf(ASM_FILE, "pop  rbx\n\t"
-                                  "pop  rax\n\t"
-                                  "cqo     \n\t"
-                                  "idiv rbx\n\t"
-                                  "push rax\n\t");
-                break;
-            }
             case ADD_OP :
             {   
-                fprintf(ASM_FILE, "pop  rbx\n\t"
-                                  "pop  rax\n\t"
-                                  "add  rax, rbx\n\t"
-                                  "push rax\n\t");
+                WriteAddR64R64(compiler, RAX, RBX);
+                // fprintf(ASM_FILE, "add  rax, rbx\n\t");
                 break;
             }
             case SUB_OP :
             {
-                fprintf(ASM_FILE, "pop  rbx\n\t"
-                                  "pop  rax\n\t"
-                                  "sub  rax, rbx\n\t"
-                                  "push rax\n\t");
+                WriteSubR64R64(compiler, RAX, RBX);
+                // fprintf(ASM_FILE, "sub  rax, rbx\n\t");
+                break;
+            }
+            case MUL_OP :
+            {
+                WriteMulR64(compiler, RBX);
+                // fprintf(ASM_FILE, "imul rbx\n\t");
+                break;
+            }
+            case DIV_OP :
+            {   
+                WriteDivR64(compiler, RBX);
+                // fprintf(ASM_FILE, "cqo     \n\t"
+                //                   "idiv rbx\n\t");
                 break;
             }
             default:
@@ -399,6 +453,9 @@ void WriteAsmSimpleExpression(Node* node, Compiler* compiler)
                 printf("I am here, but I shouldn't, line = %d\n", __LINE__);
             }
         }
+
+        WritePushR64(compiler, RAX);
+        // fprintf(ASM_FILE, "push rax\n\t");
     }
     else
     {
@@ -414,14 +471,17 @@ void WriteAsmPrimaryExpression(Node* node, Compiler* compiler)
     {
         case ID_TYPE :
         {
-            fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
-                              "push rax     ;!%s    \n\t",//!!!
-                               GetVarOfs(FUNC, node->value.name), node->value.name);
+            WriteMovR64Mem(compiler, RAX, RBP, GetVarOfs(FUNC, node->value.name));
+            WritePushR64  (compiler, RAX);
+            // fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
+            //                   "push rax     ;!%s   \n\t",
+            //                    GetVarOfs(FUNC, node->value.name), node->value.name);
             break;
         }
         case NUMB_TYPE :
         {
-            fprintf(ASM_FILE, "push %d\n\t", node->value.number);
+            WritePushNum(compiler, node->value.number);
+            // fprintf(ASM_FILE, "push %d\n\t", node->value.number);
             break;
         }
         case MEM_ACCESS_TYPE :
@@ -446,13 +506,21 @@ void WriteAsmMemoryAccess(Node* node, Compiler* compiler)
     ASM_ASSERT;
 
     WriteAsmExpression(node->right, compiler);
-    fprintf(ASM_FILE, "mov  rax, [rbp + %d] ;arr = %s\n\t"
-                      "pop  rbx            \n\t"
-                      "sal  rbx, 3         \n\t"
-                      "sub  rax, rbx       \n\t"
-                      "mov  rax, [rax]     \n\t"
-                      "push rax            \n\t",
-                      GetVarOfs(FUNC, node->left->value.name), node->left->value.name);//!!!
+
+    WriteMovR64Mem(compiler, RAX, RBP, GetVarOfs(FUNC, node->left->value.name));
+    WritePopR64   (compiler, RBX);
+    WriteSalR64   (compiler, RBX, 3);
+    WriteSubR64R64(compiler, RAX, RBX);
+    WriteMovR64Mem(compiler, RAX, RAX);
+    WritePushR64  (compiler, RAX);
+
+    // fprintf(ASM_FILE, "mov  rax, [rbp + %d]\n\t"
+    //                   "pop  rbx  ;arr = %s \n\t"
+    //                   "sal  rbx, 3         \n\t"
+    //                   "sub  rax, rbx       \n\t"
+    //                   "mov  rax, [rax]     \n\t"
+    //                   "push rax            \n\t",
+    //                   GetVarOfs(FUNC, node->left->value.name), node->left->value.name);
 }
 
 void WriteAsmCall(Node* node, Compiler* compiler)
@@ -485,11 +553,15 @@ void WriteAsmCall(Node* node, Compiler* compiler)
             printf("error : too more arguments for '%s'\n", call_func->name);
         }
 
-        fprintf(ASM_FILE, "call %s\n\t"
-                          "add  rsp, %lu\n\t", call_func->name, call_func->num_args * 8);
+        WriteCall     (compiler, call_func);
+        WriteAddR64Num(compiler, RSP, call_func->num_args * 8);
+
+        // fprintf(ASM_FILE, "call %s\n\t"
+        //                   "add  rsp, %lu\n\t", call_func->name, call_func->num_args * 8);
         if (!call_func->is_void)
         {
-            fprintf(ASM_FILE, "push rax\n\t");
+            WritePushR64(compiler, RAX);
+            // fprintf(ASM_FILE, "push rax\n\t");
         }
     }
 }
@@ -500,16 +572,21 @@ bool WriteAsmStdCall(Node* node, Compiler* compiler)
 
     if (strcmp(node->left->value.name, SCAN) == 0)
     {
-        fprintf(ASM_FILE, "call scan\n\t"
-                          "push rax \n\t");
+        WriteCall   (compiler, "scan");
+        WritePushR64(compiler, RAX);
+        // fprintf(ASM_FILE, "call scan\n\t"
+        //                   "push rax \n\t");
         return true;
     }
 
     if (strcmp(node->left->value.name, PRINT) == 0)
     {
         WriteAsmExpression(node->right->left, compiler);
-        fprintf(ASM_FILE, "call print\n\t"
-                          "pop  rbx  \n\t"); //cleaning stack
+
+        WriteCall  (compiler, "print");
+        WritePopR64(compiler, RBX);
+        // fprintf(ASM_FILE, "call print\n\t"
+        //                   "pop  rbx  \n\t"); //cleaning stack
         return true;
     }
 
@@ -537,52 +614,66 @@ void WriteAsmCompare(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    fprintf(ASM_FILE, "pop  rax\n\t"
-                      "pop  rbx\n\t"
-                      "cmp  rbx, rax\n\t");
+    WritePopR64   (compiler, RAX);
+    WritePopR64   (compiler, RBX);
+    WriteCmpR64R64(compiler, RBX, RAX);
 
-    switch (node->value.op)
-    {
-        case EQUAL_OP :
-        {
-            fprintf(ASM_FILE, "je ");
-            break;
-        }
-        case NOT_EQUAL_OP :
-        {
-            fprintf(ASM_FILE, "jne ");
-            break;
-        }
-        case LESS_OP :
-        {
-            fprintf(ASM_FILE, "jl ");
-            break;
-        }
-        case GREATER_OP :
-        {
-            fprintf(ASM_FILE, "jg ");
-            break;
-        }
-        case LESS_EQUAL_OP :
-        {
-            fprintf(ASM_FILE, "jle ");
-            break;
-        }
-        case GREATER_EQUAL_OP :
-        {
-            fprintf(ASM_FILE, "jge ");
-            break;
-        }
-    }
+    // fprintf(ASM_FILE, "pop  rax\n\t"
+    //                   "pop  rbx\n\t"
+    //                   "cmp  rbx, rax\n\t");
 
-    size_t label = LABEL++;
+    size_t true_label = LABEL++;
+    size_t continue_label = LABEL++;
 
-    fprintf(ASM_FILE, "TRUE_%lu      \n\t"
-                      "push 0          \n\t"
-                      "jmp CONTINUE_%lu\n"
-                      "TRUE_%lu :      \n\t"
-                      "push 1          \n"
-                      "CONTINUE_%lu :  \n\t", label, label, label, label);
+    WriteJumpOp(compiler, node->value.op, true_label);
+
+    // switch (node->value.op)
+    // {
+    //     case EQUAL_OP :
+    //     {
+    //         fprintf(ASM_FILE, "je ");
+    //         break;
+    //     }
+    //     case NOT_EQUAL_OP :
+    //     {
+    //         fprintf(ASM_FILE, "jne ");
+    //         break;
+    //     }
+    //     case LESS_OP :
+    //     {
+    //         fprintf(ASM_FILE, "jl ");
+    //         break;
+    //     }
+    //     case GREATER_OP :
+    //     {
+    //         fprintf(ASM_FILE, "jg ");
+    //         break;
+    //     }
+    //     case LESS_EQUAL_OP :
+    //     {
+    //         fprintf(ASM_FILE, "jle ");
+    //         break;
+    //     }
+    //     case GREATER_EQUAL_OP :
+    //     {
+    //         fprintf(ASM_FILE, "jge ");
+    //         break;
+    //     }
+    // }
+
+
+    WritePushNum(compiler, 0);
+    WriteJump   (compiler, continue_label);
+    WriteLabel  (compiler, true_label);
+    WritePushNum(compiler, 1);
+    WriteLabel  (compiler, continue_label);
+
+    // fprintf(ASM_FILE, "L%lu    \n\t"
+    //                   "push 0  \n\t"
+    //                   "jmp L%lu\n"
+    //                   "L%lu :   \n\t"
+    //                   "push 1  \n"
+    //                   "L%lu :  \n\t", true_label, continue_label, true_label, continue_label);
 }
 
 int GetVarOfs(Function* function, char* name)

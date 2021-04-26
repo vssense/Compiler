@@ -38,7 +38,7 @@ void GetFlag(const char** argv, FlagInfo* info, int* offset)
     {
         info->nametable_dump_required = true;
     }
-    else if (strcmp(argv[*offset], flags[5]))
+    else if (strcmp(argv[*offset], flags[5]) == 0)
     {
         info->asm_listing_required = true;
     }
