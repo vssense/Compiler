@@ -1,7 +1,7 @@
 #include "byte_code.h"
 
 const char* REGS[] = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"
-                              "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"};
+                       "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"};
 const char* JUMPS[] = { "je", "jne", "jl", "jg", "jle", "jge" };
 
 void WriteMovR64R64(Compiler* compiler, R64 reg1, R64 reg2)
@@ -58,7 +58,7 @@ void WriteAddR64Num(Compiler* compiler, R64 reg, int64_t value)
 {
     assert(compiler);
 
-    fprintf(compiler->file, "add %s, %ldd\n\t", REGS[reg], value);
+    fprintf(compiler->file, "add %s, %ld\n\t", REGS[reg], value);
 }
 
 void WriteSubR64R64(Compiler* compiler, R64 reg1, R64 reg2)
@@ -178,6 +178,7 @@ void WriteLabel(Compiler* compiler, size_t label)
 
     if (compiler->asm_listing_required)
     {
+        fseek(compiler->file, -1, SEEK_CUR);
         fprintf(compiler->file, "L%lu :\n\t", label);
     }
 }
@@ -220,6 +221,16 @@ void WriteTest(Compiler* compiler, R64 reg1, R64 reg2)
 
     if (compiler->asm_listing_required)
     {
-        fprintf(compiler->file, "test %s, %s\n", REGS[reg1], REGS[reg2]);
+        fprintf(compiler->file, "test %s, %s\n\t", REGS[reg1], REGS[reg2]);
+    }
+}
+
+void WriteFuncDecl(Compiler* compiler, const char* name)
+{
+    assert(compiler);
+
+    if (compiler->asm_listing_required)
+    {
+        fprintf(compiler->file, "\n%s :\n\t", name);
     }
 }

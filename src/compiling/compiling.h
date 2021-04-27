@@ -3,11 +3,6 @@
 
 #include "../tree/tree.h"
 
-enum Jumps
-{
-    
-};
-
 struct Function
 {
     const char* name;

@@ -35,3 +35,4 @@ void WriteCall     (Compiler* compiler, Function* func);
 void WriteCall     (Compiler* compiler, const char* name);
 void WriteRet      (Compiler* compiler);
 void WriteTest     (Compiler* compiler, R64 reg1, R64 reg2);
+void WriteFuncDecl (Compiler* compiler, const char* name);

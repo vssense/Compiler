@@ -165,7 +165,7 @@ void WriteAsmFunc(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    fprintf(ASM_FILE, "\n%s :       \n\t", node->value.name);
+    WriteFuncDecl(compiler, node->value.name);
 
     WritePushR64  (compiler, RBP);
     WriteMovR64R64(compiler, RBP, RSP);
