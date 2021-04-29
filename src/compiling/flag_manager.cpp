@@ -2,7 +2,8 @@
 
 const char* flags[] =
 {
-    "-h", "-o", "-parser-dump", "-tree-dump", "-nametable-dump", "-S"
+    "-h", "-o", "-parser-dump", "-tree-dump",
+    "-nametable-dump", "-S", "-Os", "-Om"
 };
 
 const char* help_message = "use flags:\n"
@@ -11,7 +12,9 @@ const char* help_message = "use flags:\n"
                  "      -parser-dump     console dump of all tokens and their types                           \n"
                  "      -tree-dump       build and open tree of program using dot(must exists 'log' directory)\n"
                  "      -nametable-dump  console dump info about functions and variables                      \n"
-                 "      -S               create file with nasm code of your program                           \n";
+                 "      -S               create file with nasm code of your program                           \n"
+                 "      -Os              speed optimization                                                   \n"
+                 "      -Om              memory optimization                                                   \n";
 
 void GetFlag(const char** argv, FlagInfo* info, int* offset)
 {

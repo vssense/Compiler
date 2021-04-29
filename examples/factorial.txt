@@ -1,9 +1,6 @@
 возьмем main()
 начнем
-    возьмем a зомбируем ноль;
-    a зомбируем nepravdoi();
-    govoru(Fact(a));
-
+    govoru(Fact(nepravdoi()));
     положим ноль;
 закончим
 

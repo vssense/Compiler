@@ -13,6 +13,9 @@ struct FlagInfo
     bool nametable_dump_required = false;
 
     bool asm_listing_required    = false;
+
+    bool speed_optimization_required = false;
+    bool memory_optimization_required = false;
 };
 
 void GetFlagInfo(const int argc, const char** argv, FlagInfo* info);
