@@ -105,21 +105,14 @@ $ ./genius_prog
 
 ### Features :+1:
 
->Everything is functions - you can't use global variables
->
->There is only one variable scope - function
->
->Also you have to use block's operators in each while and if/else statement
->
->Two variable types - int64_t and int64_t arrays
->
->You can use []operator to any of your variable - you can interpret it as a pointer
->
->You can use pointer arithmetic - but do not forget that arrays are going backwards
->
->You must have "**main**" function - it will be called first
->
->You have to finish each statement with semicolon
+> - Everything is functions - you can't use global variables
+> - There is only one variable scope - function
+> - Also you have to use block's operators in each while and if/else statement
+> - Two variable types - int64_t and int64_t arrays
+> - You can use []operator to any of your variable - you can interpret it as a pointer
+> - You can use pointer arithmetic - but do not forget that arrays are going backwards
+> - You must have "**main**" function - it will be called first
+> - You have to finish each statement with semicolon
 >
 >#### Some std functions :
 >
