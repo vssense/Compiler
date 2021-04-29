@@ -4,12 +4,12 @@
 > I already got compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language) which compiles for very slow [CPU](https://github.com/vssense/Processor)
 > In this project I added arrays and ability to compile to nasm and even to byte code
 ### Usage
->```
+
 > $ git clone https://github.com/vssense/Compiler.git
 > $ mkdir bin
 > $ make
 > $ bin/shlang -h
->```
+
 >You will see a help message
 >```
 >use flags:
@@ -23,12 +23,11 @@
 >      -Om              memory optimization
 >```
 > For example, to open a picture with a tree of your program run
->```
+
 > $ mkdir bin
 > $ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
 > $ chmod +x genius_prog
 > $ ./genius_prog
->```
 
 ### Grammar :+1:
 
