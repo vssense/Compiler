@@ -2,7 +2,11 @@
 #include "flag_manager.h"
 #include "byte_code.h"
 
-const char* ASM_FILE_NAME = "asm_tmp.nasm";
+const size_t offset_to_set_data   = 0x02;
+const size_t start_virtual_offset = 0x400000;
+
+const char* ASM_FILE_NAME = "asm_listing.nasm";
+const char* DEFAULT_OUTPUT_FILE_NAME = "b.out";
 
 #include "std_func.cpp"
 
@@ -30,7 +34,8 @@ void       DeleteNameTable  (NameTable* table);
 ///// Assemble
 /////////////////////////////////////////////////////////////////
 void Assemble                 (Tree* tree, FlagInfo* info);
-void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, bool asm_listing_required);
+void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, FlagInfo* info);
+void WriteByteCodeToFile      (Compiler* compiler, FlagInfo* info);
 void WriteAsmStdFunctions     (Compiler* compiler);
 void WriteAsmStdData          (Compiler* compiler);
 void WriteAsmFunc             (Node* node, Compiler* compiler);
@@ -52,7 +57,6 @@ int  GetVarOfs                (Function* function, char* name);
 
 #define ASM_ASSERT assert(node);               \
                    assert(compiler->table);    \
-                   assert(compiler->file);     \
                    assert(compiler->function)
 
 #define FUNC      compiler->function
@@ -98,23 +102,31 @@ void Assemble(Tree* tree, FlagInfo* info)
     assert(tree);
 
     NameTable* table = MakeTableOfNames(tree);
+
     if (info->nametable_dump_required)
     {
         NameTableDump(table);
     }
 
-    FILE* asm_file = fopen(ASM_FILE_NAME, "w");
-    assert(asm_file);
+    FILE* asm_file = nullptr;
 
-    WriteAsmCode(tree, table, asm_file, info->asm_listing_required);
- 
-    fclose(asm_file);
+    if (info->asm_listing_required)
+    {
+        asm_file = fopen(ASM_FILE_NAME, "w");
+        assert(asm_file);
+    }
+
+    WriteAsmCode(tree, table, asm_file, info);
+
+    if (info->asm_listing_required)
+    {
+        fclose(asm_file);
+    }
 }
 
-void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, bool asm_listing_required)
+void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, FlagInfo* info)
 {
     assert(tree);
-    assert(file);
 
     Node* node = tree->root;
 
@@ -123,16 +135,22 @@ void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, bool asm_listing_req
     compiler.function             = table->functions;
     compiler.file                 = file;
     compiler.label                = 0;
-    compiler.asm_listing_required = asm_listing_required;
+    compiler.asm_listing_required = info->asm_listing_required;
 
-    fprintf(file, "section .text\n"
-                  "global _start\n\n");
+    Construct(&compiler.writer);
+    InitElf64(&compiler.writer);
 
-    fprintf(file, "_start:       \n\t"
-                  "call main     \n\t"
-                  "mov  rax, 0x3C\n\t"
-                  "xor  rdi, rdi \n\t"
-                  "syscall       \n");
+    if (info->asm_listing_required)
+    {
+        fprintf(file, "section .text\n"
+                      "global _start\n\n"
+                      "_start:      \n\t");
+    }
+
+    WriteCall     (&compiler, FindFunc("main", compiler.table));
+    WriteMovR64Num(&compiler, RAX, 0x3c);
+    WriteMovR64Num(&compiler, RDI, 0x00);
+    WriteSyscall  (&compiler);
 
     WriteAsmStdFunctions(&compiler);
 
@@ -146,30 +164,82 @@ void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, bool asm_listing_req
 
     WriteAsmStdData(&compiler);
 
+    SetAllCalls(&compiler);
+    SetElfHeaders(&compiler.writer);
+
+    WriteByteCodeToFile(&compiler, info);
+
     DestructNameTable(table);
     DeleteNameTable(table);
+    Destruct(&compiler.writer);
+}
+
+void WriteByteCodeToFile(Compiler* compiler, FlagInfo* info)
+{
+    assert(compiler);
+    assert(info);
+
+    const char* output_file_name = DEFAULT_OUTPUT_FILE_NAME;
+
+    if (info->output_file != nullptr)
+    {
+        output_file_name = info->output_file;
+    }
+
+    FILE* output = fopen(output_file_name, "w");
+    assert(output);
+    fwrite(compiler->writer.buffer, compiler->writer.offset, sizeof(char), output);
+    fclose(output);
 }
 
 void WriteAsmStdFunctions(Compiler* compiler)
 {
-    fprintf(ASM_FILE, "%s", print_func);
-    fprintf(ASM_FILE, "%s", scan_func);
+    assert(compiler);
+
+    ElfFileWriter* writer = &compiler->writer;
+
+    memcpy(writer->buffer + writer->offset, byte_code_print, sizeof(byte_code_print));
+    compiler->print_offset = writer->offset;
+    writer->offset += sizeof(byte_code_print);
+
+    memcpy(writer->buffer + writer->offset, byte_code_scan, sizeof(byte_code_scan));
+    compiler->scan_offset = writer->offset;
+    writer->offset += sizeof(byte_code_scan);
+
+    if (compiler->asm_listing_required)
+    {
+        fprintf(ASM_FILE, "%s", nasm_print_func);
+        fprintf(ASM_FILE, "%s", nasm_scan_func);
+    }
 }
 
 void WriteAsmStdData(Compiler* compiler)
 {
-    fprintf(ASM_FILE, "%s", asm_data);
+    assert(compiler);
+
+    int data_segment_offset = InitDataSegment(&compiler->writer);
+
+    memcpy(compiler->writer.buffer + compiler->writer.offset, byte_code_std_data, sizeof(byte_code_std_data));
+    compiler->writer.offset += sizeof(byte_code_std_data);
+
+    SetInt(&compiler->writer, start_virtual_offset + data_segment_offset, offset_to_set_data + compiler->print_offset);
+    SetInt(&compiler->writer, start_virtual_offset + data_segment_offset, offset_to_set_data + compiler->scan_offset);
+
+    if (compiler->asm_listing_required)
+    {
+        fprintf(ASM_FILE, "%s", asm_data);
+    }
 }
 
 void WriteAsmFunc(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    WriteFuncDecl(compiler, node->value.name);
+    WriteFuncDecl(compiler, FUNC);
 
     WritePushR64  (compiler, RBP);
     WriteMovR64R64(compiler, RBP, RSP);
-    WriteSubR64Num(compiler, RSP, FUNC->num_vars * 8);
+    WriteSubR64Num(compiler, RSP, FUNC->num_vars * sizeof(int64_t));
 
     WriteAsmCompound(node->left->right, compiler);
 
@@ -270,18 +340,21 @@ void WriteAsmLoop(Node* node, Compiler* compiler)
     size_t loop_label = LABEL++;
     size_t continue_label = LABEL++;
 
-    WriteLabel(compiler, loop_label);
+    size_t loop_label_offset = WriteLabel(compiler, loop_label);
 
     WriteAsmExpression(node->left, compiler);
 
     WritePopR64(compiler, RAX);
     WriteTest  (compiler, RAX, RAX);
-    WriteJumpOp(compiler, EQUAL_OP, continue_label);
+    size_t continue_jump_offset = WriteJumpOp(compiler, EQUAL_OP, continue_label);
 
     WriteAsmCompound(node->right->right, compiler);
 
-    WriteJump (compiler, loop_label);
-    WriteLabel(compiler, continue_label);
+    size_t loop_jump_offset      = WriteJump (compiler, loop_label);
+    size_t continue_label_offset = WriteLabel(compiler, continue_label);
+
+    SetInt(&compiler->writer, loop_label_offset - loop_jump_offset - sizeof(int), loop_jump_offset);
+    SetInt(&compiler->writer, continue_label_offset - continue_jump_offset - sizeof(int), continue_jump_offset);
 }
 
 void WriteAsmCondition(Node* node, Compiler* compiler)
@@ -296,21 +369,26 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
 
     WritePopR64(compiler, RAX);
     WriteTest  (compiler, RAX, RAX);
-    WriteJumpOp(compiler, NOT_EQUAL_OP, true_label);
-    WriteJump  (compiler, false_label);
-    WriteLabel (compiler, true_label);
+
+    size_t true_jump_offset  = WriteJumpOp(compiler, NOT_EQUAL_OP, true_label);
+    size_t false_jump_offset = WriteJump  (compiler, false_label);
+    size_t true_label_offset = WriteLabel (compiler, true_label);
 
     WriteAsmCompound(node->right->left->right, compiler);
 
-    WriteJump(compiler, continue_label);
-    WriteLabel(compiler, false_label);
+    size_t continue_jump_offset = WriteJump(compiler, continue_label);
+    size_t false_label_offset   = WriteLabel(compiler, false_label);
 
     if (node->right->right != nullptr)
     {
         WriteAsmCompound(node->right->right->right, compiler);
     }
 
-    WriteLabel(compiler, continue_label);
+    size_t continue_label_offset = WriteLabel(compiler, continue_label);
+
+    SetInt(&compiler->writer, true_label_offset - true_jump_offset - sizeof(int), true_jump_offset);
+    SetInt(&compiler->writer, false_label_offset - false_jump_offset - sizeof(int), false_jump_offset);
+    SetInt(&compiler->writer, continue_label_offset - continue_jump_offset - sizeof(int), continue_jump_offset);
 }
 
 void WriteAsmAssignment(Node* node, Compiler* compiler)
@@ -542,16 +620,20 @@ void WriteAsmCompare(Node* node, Compiler* compiler)
     WritePopR64   (compiler, RBX);
     WriteCmpR64R64(compiler, RBX, RAX);
 
-    size_t true_label = LABEL++;
+    size_t true_label     = LABEL++;
     size_t continue_label = LABEL++;
 
-    WriteJumpOp(compiler, node->value.op, true_label);
+    size_t true_jump_offset = WriteJumpOp(compiler, node->value.op, true_label);
 
     WritePushNum(compiler, 0);
-    WriteJump   (compiler, continue_label);
-    WriteLabel  (compiler, true_label);
+    size_t continue_jump_offset  = WriteJump (compiler, continue_label);
+    size_t true_label_offset     = WriteLabel(compiler, true_label);
+
     WritePushNum(compiler, 1);
-    WriteLabel  (compiler, continue_label);
+    size_t continue_label_offset = WriteLabel(compiler, continue_label);
+
+    SetInt(&compiler->writer, true_label_offset     - true_jump_offset     - sizeof(int), true_jump_offset);
+    SetInt(&compiler->writer, continue_label_offset - continue_jump_offset - sizeof(int), continue_jump_offset);
 }
 
 int GetVarOfs(Function* function, char* name)
@@ -563,7 +645,7 @@ int GetVarOfs(Function* function, char* name)
     {
         if (strcmp(function->vars[i], name) == 0)
         {
-            return (i + 2) * 8;
+            return (i + 2) * sizeof(int64_t);
         }
     }
 
@@ -571,7 +653,7 @@ int GetVarOfs(Function* function, char* name)
     {
         if (strcmp(function->vars[i], name) == 0)
         {
-            return - (i - function->num_args + 1) * 8;
+            return - (i - function->num_args + 1) * sizeof(int64_t);
         }
     }
     
@@ -722,6 +804,7 @@ void GetNames(char** vars, Node* subtree)
 void GetVars(Node* node, char** vars, size_t* ofs)
 {
     assert(vars);
+    assert(ofs);
 
     if (node == nullptr)
     {

@@ -16,7 +16,6 @@ void    GetTokens        (Token* tokens, size_t* ofs, Buffer* buffer);
 void    Delete           (Buffer* buffer);
 void    ParserDump       (Parser* parser);
 
-
 size_t LenOfFile(FILE* file)
 {
     assert(file);

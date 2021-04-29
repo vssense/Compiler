@@ -12,7 +12,7 @@ struct FlagInfo
     bool tree_dump_required      = false;
     bool nametable_dump_required = false;
 
-    bool asm_listing_required    = true; //!!!false
+    bool asm_listing_required    = false;
 };
 
 void GetFlagInfo(const int argc, const char** argv, FlagInfo* info);

@@ -12,7 +12,11 @@ struct Function
     bool   is_void;
     size_t num_args;
     size_t num_vars;
+
+    size_t offset;
 };
+
+#include "elf_writer.h"
 
 struct NameTable
 {
@@ -31,6 +35,11 @@ struct Compiler
     size_t label;
 
     bool asm_listing_required;
+
+    ElfFileWriter writer;
+
+    size_t print_offset;
+    size_t scan_offset;
 };
 
 NameTable* MakeTableOfNames(Tree* tree);

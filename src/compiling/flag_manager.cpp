@@ -6,12 +6,12 @@ const char* flags[] =
 };
 
 const char* help_message = "use flags:\n"
-                 "      -h               display help                           \n"
-                 "      -o               next arg is a name of output file      \n"
-                 "      -parser-dump     show all tokens and their types        \n"
-                 "      -tree-dump       show tree of program using dot         \n"
-                 "      -nametable-dump  show info about functions and variables\n"
-                 "      -S               show nasm code of your program         \n";
+                 "      -h               display help                                                         \n"
+                 "      -o               name output with the next command line arg                           \n"
+                 "      -parser-dump     console dump of all tokens and their types                           \n"
+                 "      -tree-dump       build and open tree of program using dot(must exists 'log' directory)\n"
+                 "      -nametable-dump  console dump info about functions and variables                      \n"
+                 "      -S               create file with nasm code of your program                           \n";
 
 void GetFlag(const char** argv, FlagInfo* info, int* offset)
 {
