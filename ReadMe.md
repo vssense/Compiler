@@ -5,10 +5,10 @@
 > In this project I added arrays and ability to compile to nasm and even to byte code
 ### Usage
 
-> $ git clone https://github.com/vssense/Compiler.git
-> $ mkdir bin
-> $ make
-> $ bin/shlang -h
+$ git clone https://github.com/vssense/Compiler.git
+$ mkdir bin
+$ make
+$ bin/shlang -h
 
 >You will see a help message
 >```
@@ -24,10 +24,10 @@
 >```
 > For example, to open a picture with a tree of your program run
 
-> $ mkdir bin
-> $ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
-> $ chmod +x genius_prog
-> $ ./genius_prog
+$ mkdir bin
+$ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
+$ chmod +x genius_prog
+$ ./genius_prog
 
 ### Grammar :+1:
 
