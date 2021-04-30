@@ -105,8 +105,8 @@ $ ./genius_prog
 > - start of block is "**начнем**" ("*nachnem*")
 > - end of block is "**закончим**" ("*zakonchim*")
 >
-> To declare a function use key-word "**возьмем**" ("*vozmem*") or "**ничего**" ("*nichego*")
-> To declare a variable use key-word "**возьмем**" ("*vozmem*")
+> - To declare a function use key-word "**возьмем**" ("*vozmem*") or "**ничего**" ("*nichego*")
+> - To declare a variable use key-word "**возьмем**" ("*vozmem*")
 
 ### Features :+1:
 
