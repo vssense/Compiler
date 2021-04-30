@@ -24,7 +24,7 @@ $ bin/shlang -h
 >```
 > For example, to open a picture with a tree of your program run
 ```
-$ mkdir bin
+$ mkdir log
 $ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
 $ chmod +x genius_prog
 $ ./genius_prog
