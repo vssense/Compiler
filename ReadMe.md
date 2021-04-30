@@ -1,8 +1,9 @@
+# PREDOVEDOMLYANE!!! BUSURMANSKY YAZIK
 # Programming language of drevniy rus  :scream_cat:
 
-## Idea
-- I already got compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language) which compiles for very slow [CPU](https://github.com/vssense/Processor)
-- In this project I added arrays and ability to compile to nasm and even to x86-64 byte code
+## The idea
+- I already implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language), shlang (Slavik Historical Language). It outputs byte code for my (very slow) soft [CPU](https://github.com/vssense/Processor).
+- In this project I added data arrays and ability to compile to x86-64 native code and to output nasm listings for debug purposes.
 ### Usage
 ```
 $ git clone https://github.com/vssense/Compiler.git
@@ -13,20 +14,19 @@ $ bin/shlang -h
 >You will see a help message
 >```
 >use flags:
->      -h               display help        
->      -o               name output with the next command line arg (default b.out)
->      -parser-dump     console dump of all tokens and their types
->      -tree-dump       build and open tree of program using dot (must exists 'log' directory)
->      -nametable-dump  console dump info about functions and variables
->      -S               create file with nasm code of your program
->      -Os              speed optimization
->      -Om              memory optimization
+>      -h                    display help        
+>      -o                    output file name (default b.out)
+>      -femit-parser-dump    console dump of all tokens and their types
+>      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool (!!!'log' directory must exists)
+>      -femit-nametable-dump emit console dump info about functions and variables
+>      -S                    create file with nasm code of your program
+>      -Os                   optimization for speed
+>      -Om                   optimization for memory usage
 >```
-> For example, to open a picture with a tree of your program run
+> For example, to open a picture with a tree of your program run:
 ```
-$ mkdir log
 $ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
-$ chmod +x genius_prog
+$ chmod +x genius_prog !!!
 $ ./genius_prog
 ```
 ### Grammar :+1:
@@ -101,7 +101,8 @@ $ ./genius_prog
 > - start of block is "**начнем**"
 > - end of block is "**закончим**"
 >
-> To declare a function or variable use key-word "**возьмем**" or "**ничего**"
+> To declare a function use key-word "**возьмем**" or "**ничего**"
+> To declare a variable use key-word "**возьмем**"
 
 ### Features :+1:
 
@@ -142,7 +143,7 @@ $ ./genius_prog
 закончим
 ```
 
-###### qsort :
+###### qsort(skoroporyadok) :
 
 ```возьмем main()
 начнем
@@ -185,7 +186,7 @@ $ ./genius_prog
     иначе
     начнем
         QuickSort(array, pos);
-        QuickSort(array - (pos) * золотничок, size - pos);
+        QuickSort(array - pos * золотничок, size - pos);
     закончим
 закончим
 
