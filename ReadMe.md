@@ -78,8 +78,10 @@ $ ./genius_prog
 
 ### Syntax :+1:
 
-> You have to save your program with Windows 1251 encoding 
-> if you are BUSURMANIN you can use english key-words instead of SLAVIK
+> You have to save your program with Windows 1251 encoding.
+
+> if you are BUSURMANIN you can use english key-words instead of SLAVIK.
+
 > There is no digits - you can use only drevniy rus arithmetics :smirk_cat: :
 >
 > - 0  - ноль        - nol
