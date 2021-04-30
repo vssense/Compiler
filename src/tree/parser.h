@@ -17,8 +17,10 @@ enum OperatorType
     RET,
     IF,
     ELSE,
-    EQUAL,
     ASSIGNMENT,
+    OPENING_BRACE,
+    CLOSING_BRACE,
+    EQUAL,
     PLUS,
     MINUS,
     MUL,
@@ -28,8 +30,6 @@ enum OperatorType
     BELOW,
     ABOVE,
     NOT_EQUAL,
-    OPENING_BRACE,
-    CLOSING_BRACE,
     OPENING_ROUND_BRACKET,
     CLOSING_ROUND_BRACKET,
     OPENING_SQUARE_BRACKET,
@@ -42,58 +42,62 @@ enum OperatorType
 
 struct Operator
 {
-    const char* name;
-    size_t len;
+    const char* rus_name;
+    size_t rus_len;
+    const char* eng_name;
+    size_t eng_len;
 };
 
 static const Operator OPERATORS[] =
 {
-    { "возьмем"           , 7  },
-    { "ничего"            , 6  },
-    { "зомбирование_идет" , 17 },
-    { "положим"           , 7  },
-    { "в_случае"          , 8  },
-    { "иначе"             , 5  },
-    { "=="                , 2  },
-    { "зомбируем"         , 9  },
-    { "+"                 , 1  },
-    { "-"                 , 1  },
-    { "*"                 , 1  },
-    { "/"                 , 1  },
-    { "<="                , 2  },
-    { ">="                , 2  },
-    { "<"                 , 1  },
-    { ">"                 , 1  },
-    { "!="                , 2  },
-    { "начнем"            , 6  },
-    { "закончим"          , 8  },
-    { "("                 , 1  },
-    { ")"                 , 1  },
-    { "["                 , 1  },
-    { "]"                 , 1  },
-    { ";"                 , 1  },
-    { ","                 , 1  }
+    { "возьмем"           , 7 , "vozmem"           , 6 },
+    { "ничего"            , 6 , "nichego"          , 7 },
+    { "зомбирование_идет" , 17, "zombirovanie_idet", 17},
+    { "положим"           , 7 , "polojim"          , 7 },
+    { "коли"              , 4 , "koli"             , 4 },
+    { "иначе"             , 5 , "inache"           , 6 },
+    { "зомбируем"         , 9 , "zombiruem"        , 9 },
+    { "начнем"            , 6 , "nachnem"          , 7 },
+    { "закончим"          , 8 , "zakonchim"        , 9 },
+    { "=="                , 2 ,  nullptr           , 0 },
+    { "+"                 , 1 ,  nullptr           , 0 },
+    { "-"                 , 1 ,  nullptr           , 0 },
+    { "*"                 , 1 ,  nullptr           , 0 },
+    { "/"                 , 1 ,  nullptr           , 0 },
+    { "<="                , 2 ,  nullptr           , 0 },
+    { ">="                , 2 ,  nullptr           , 0 },
+    { "<"                 , 1 ,  nullptr           , 0 },
+    { ">"                 , 1 ,  nullptr           , 0 },
+    { "!="                , 2 ,  nullptr           , 0 },
+    { "("                 , 1 ,  nullptr           , 0 },
+    { ")"                 , 1 ,  nullptr           , 0 },
+    { "["                 , 1 ,  nullptr           , 0 },
+    { "]"                 , 1 ,  nullptr           , 0 },
+    { ";"                 , 1 ,  nullptr           , 0 },
+    { ","                 , 1 ,  nullptr           , 0 }
 };
 
 struct Digit
 {
-    const char* digit;
-    size_t len;
+    const char* rus_digit;
+    size_t rus_len;
+    const char* eng_digit;
+    size_t eng_len;
 };
 
 static const Digit DIGITS[] =
 {
-    { "ноль"       , 4  }, 
-    { "целковый"   , 8  }, 
-    { "полушка"    , 7  }, 
-    { "четвертушка", 11 }, 
-    { "осьмушка"   , 8  }, 
-    { "пудовичок"  , 9  }, 
-    { "мед€чок"    , 7  }, 
-    { "серебр€чок" , 10 }, 
-    { "золотничок" , 10 }, 
-    { "дев€тичок"  , 9  },
-    { "дес€тичок"  , 9  } 
+    { "ноль"       , 4 , "nol"          , 3  }, 
+    { "целковый"   , 8 , "celkovii"     , 8  }, 
+    { "полушка"    , 7 , "polushka"     , 8  }, 
+    { "четвертушка", 11, "chetvertushka", 13 }, 
+    { "осьмушка"   , 8 , "osmyshka"     , 8  }, 
+    { "пудовичок"  , 9 , "pudovichok"   , 10 }, 
+    { "мед€чок"    , 7 , "medyachok"    , 9  }, 
+    { "серебр€чок" , 10, "serebryachok" , 12 }, 
+    { "золотничок" , 10, "zolotnichok"  , 11 }, 
+    { "дев€тичок"  , 9 , "devyatichok"  , 11 },
+    { "дес€тичок"  , 9 , "desyatichok"  , 11 } 
 };
 
 const int NUM_DIGITS = 11;

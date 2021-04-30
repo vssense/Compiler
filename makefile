@@ -2,17 +2,22 @@ GPP = g++
 
 options = -Wall -Wextra
 src = src
-bin = bin
+bin = build
 
 input = input.txt
 
-default : $(bin)/shlang
+.PHONY : bindir run default
 
-run : $(bin)/shlang
-	$(bin)/shlang $(input)
+default : bindir shlang
 
-$(bin)/shlang : $(bin)/parser.o $(bin)/tree.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/compiling.o $(bin)/elf_writer.o $(src)/main.cpp
-	$(GPP) $(src)/main.cpp $(bin)/parser.o $(bin)/elf_writer.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/tree.o $(bin)/compiling.o -o $(bin)/shlang $(options)
+bindir : 
+	mkdir -p build
+ 
+run : shlang
+	shlang $(input)
+
+shlang : $(bin)/parser.o $(bin)/tree.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/compiling.o $(bin)/elf_writer.o $(src)/main.cpp
+	$(GPP) $(src)/main.cpp $(bin)/parser.o $(bin)/elf_writer.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/tree.o $(bin)/compiling.o -o shlang $(options)
 
 $(bin)/byte_code.o : $(src)/compiling/byte_code.cpp $(src)/compiling/byte_code.h
 	$(GPP) -c $(src)/compiling/byte_code.cpp -o $(bin)/byte_code.o $(options)

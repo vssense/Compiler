@@ -1,48 +1,47 @@
-возьмем main()
-начнем
-	возьмем size зомбируем nepravdoi();
-	возьмем array[size];
-	возьмем idx зомбируем ноль;
-	зомбирование_идет (idx < size)
-	начнем
-		array[idx] зомбируем nepravdoi();
-		idx зомбируем idx + целковый;
-	закончим
+vozmem main()
+nachnem
+	vozmem size zombiruem nepravdoi();
+	vozmem array[size];
+	vozmem idx zombiruem nol;
+	zombirovanie_idet (idx < size)
+	nachnem
+		array[idx] zombiruem nepravdoi();
+		idx zombiruem idx + celkovii;
+	zakonchim
 
 	Sort(array, size);
 
-	idx зомбируем ноль;
+	idx zombiruem nol;
 
-	зомбирование_идет (idx < size)
-	начнем
+	zombirovanie_idet (idx < size)
+	nachnem
 		govoru(array[idx]);
-		idx зомбируем idx + целковый;
-	закончим
+		idx zombiruem idx + celkovii;
+	zakonchim
 
-	положим ноль;
-закончим
+	polojim nol;
+zakonchim
 
 ничего Sort(array, size)
-начнем
-	возьмем i зомбируем ноль;
-	возьмем j зомбируем ноль;
-    возьмем tmp зомбируем ноль; 
+nachnem
+	vozmem i zombiruem nol;
+	vozmem j zombiruem nol;
+    vozmem tmp zombiruem nol; 
 
-	зомбирование_идет (i < size)
-	начнем
-		j зомбируем ноль;
-		зомбирование_идет (j < size - целковый)
-		начнем
-			в_случае (array[j] > array[j + целковый])
-			начнем
-				tmp зомбируем array[j];
-				array[j] зомбируем array[j + целковый];
-				array[j + целковый] зомбируем tmp; 
-			закончим
-			j зомбируем j + целковый;
-		закончим
+	zombirovanie_idet (i < size)
+	nachnem
+		j zombiruem nol;
+		zombirovanie_idet (j < size - celkovii)
+		nachnem
+			коли (array[j] > array[j + celkovii])
+			nachnem
+				tmp zombiruem array[j];
+				array[j] zombiruem array[j + celkovii];
+				array[j + celkovii] zombiruem tmp; 
+			zakonchim
+			j zombiruem j + celkovii;
+		zakonchim
 		
-		i зомбируем i + целковый;
-	закончим
-	положим;
-закончим
+		i zombiruem i + celkovii;
+	zakonchim
+zakonchim

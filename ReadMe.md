@@ -1,32 +1,32 @@
 # PREDOVEDOMLYANE!!! BUSURMANSKY YAZIK
+# NE TOLKO V KITAE COMPILATORЫ PISHUT
 # Programming language of drevniy rus  :scream_cat:
 
 ## The idea
-- I already implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language), shlang (Slavik Historical Language). It outputs byte code for my (very slow) soft [CPU](https://github.com/vssense/Processor).
+- I already implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language). It outputs byte code for my (very slow) soft [CPU](https://github.com/vssense/Processor).
 - In this project I added data arrays and ability to compile to x86-64 native code and to output nasm listings for debug purposes.
+- I named it Slavik Historical Language (or shlang).
 ### Usage
 ```
 $ git clone https://github.com/vssense/Compiler.git
-$ mkdir bin
 $ make
-$ bin/shlang -h
+$ shlang -h
 ```
 >You will see a help message
 >```
 >use flags:
 >      -h                    display help        
 >      -o                    output file name (default b.out)
->      -femit-parser-dump    console dump of all tokens and their types
->      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool (!!!'log' directory must exists)
->      -femit-nametable-dump emit console dump info about functions and variables
 >      -S                    create file with nasm code of your program
 >      -Os                   optimization for speed
 >      -Om                   optimization for memory usage
+>      -femit-parser-dump    emit console dump of all tokens and their types
+>      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool
+>      -femit-nametable-dump emit console dump info about functions and variables
 >```
 > For example, to open a picture with a tree of your program run:
 ```
-$ bin/shlang my_genius_prog.txt -o genius_prog -tree-dump
-$ chmod +x genius_prog !!!
+$ shlang my_genius_prog.txt -o genius_prog -tree-dump
 $ ./genius_prog
 ```
 ### Grammar :+1:
@@ -69,7 +69,7 @@ $ ./genius_prog
 >       Init ::= 'возьмем' Var 'зомбируем' Expr
 >       Assg ::= (Var | Mem) 'зомбируем' Expr
 >       Jump ::= 'положим' Expr
->       Cond ::= 'в_случае' '(' Expr ')' Comp | 'в_случае' '(' Expr ')' Comp 'иначе' Comp
+>       Cond ::= 'коли' '(' Expr ')' Comp | 'коли' '(' Expr ')' Comp 'иначе' Comp
 >       Loop ::= 'зомбирование_идет' '(' Expr ')' Comp
 >       Var  ::= ['A' - 'Z', 'a' - 'z', '_']+
 >       Mem  ::= Var '[' Expr ']'
@@ -78,31 +78,33 @@ $ ./genius_prog
 
 ### Syntax :+1:
 
+> You have to save your program with Windows 1251 encoding 
+> if you are BUSURMANIN you can use english key-words instead of SLAVIK
 > There is no digits - you can use only drevniy rus arithmetics :smirk_cat: :
 >
-> - 0 - ноль
-> - 1 - целковый
-> - 2 - полушка
-> - 3 - четвертушка
-> - 4 - осьмушка
-> - 5 - пудовичок
-> - 6 - медячок
-> - 7 - серебрячок
-> - 8 - золотничок
-> - 9 - девятичок
-> - 10 - десятичок
+> - 0  - ноль        - nol
+> - 1  - целковый    - celkovii
+> - 2  - полушка     - polushka
+> - 3  - четвертушка - chetvertushka
+> - 4  - осьмушка    - osmyshka
+> - 5  - пудовичок   - pudovichok
+> - 6  - медячок     - medyachok
+> - 7  - серебрячок  - serebryachok
+> - 8  - золотничок  - zolotnichok
+> - 9  - девятичок   - devyatichok
+> - 10 - десятичок   - desyatichok
 >
 > As you could already understand
 >
-> - loop is "**зомбирование_идет**"
-> - if is "**в_случае**"
-> - else is "**иначе**"
-> - '=' is "**зомбируем**"
-> - start of block is "**начнем**"
-> - end of block is "**закончим**"
+> - loop is "**зомбирование_идет**" or "**zombirovanie_idet**"
+> - if is  "**коли**" ("*koli*")
+> - else is "**иначе**" ("*inache*")
+> - '=' is "**зомбируем**" ("*zombiruem*")
+> - start of block is "**начнем**" ("*nachnem*")
+> - end of block is "**закончим**" ("*zakonchim*")
 >
-> To declare a function use key-word "**возьмем**" or "**ничего**"
-> To declare a variable use key-word "**возьмем**"
+> To declare a function use key-word "**возьмем**" ("*vozmem*") or "**ничего**" ("*nichego*")
+> To declare a variable use key-word "**возьмем**" ("*vozmem*")
 
 ### Features :+1:
 
@@ -111,16 +113,17 @@ $ ./genius_prog
 > - Also you have to use block's operators in each while and if/else statement
 > - Two variable types - int64_t and int64_t arrays
 > - You can use []operator to any of your variable - you can interpret it as a pointer
-> - You can use pointer arithmetic - but do not forget that arrays are going backwards
+> - You can use pointer arithmetic - but do not forget that arrays are going backwards (kol predkami zapovedano vnochno debajit)
 > - You must have "**main**" function - it will be called first
 > - You have to finish each statement with semicolon
 >
 >#### Some std functions :
 >
->1. govoru(a) - prints a
->2. a = nepravdoi() - takes a from stdin (you must finish your input with \n)
+> 1. govoru(a) - prints a
+> 2. a = nepravdoi() - takes a from stdin (you must finish your input with \n)
 
 ##### Now some examples
+> P.S.: [example](https://github.com/vssense/Compiler/blob/master/examples/sort.txt) using BUSURMANSIY LANGUAGE
 
 ###### factorial :
 ```

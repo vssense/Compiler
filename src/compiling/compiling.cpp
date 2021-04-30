@@ -4,6 +4,7 @@
 
 const size_t offset_to_set_data   = 0x02;
 const size_t start_virtual_offset = 0x400000;
+const size_t chmod_str_len        = 128;
 
 const char* ASM_FILE_NAME = "asm_listing.nasm";
 const char* DEFAULT_OUTPUT_FILE_NAME = "b.out";
@@ -204,7 +205,12 @@ void WriteByteCodeToFile(Compiler* compiler, FlagInfo* info)
     }
 
     FILE* output = fopen(output_file_name, "w");
-    assert(output);
+    assert(output && "Can't create output file");
+
+    char chmod_str[chmod_str_len] = "";
+    sprintf(chmod_str, "chmod +x %s", output_file_name);
+    system(chmod_str);
+
     fwrite(compiler->writer.buffer, compiler->writer.offset, sizeof(char), output);
     fclose(output);
 }

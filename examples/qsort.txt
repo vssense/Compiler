@@ -25,14 +25,14 @@
 
 ничего QuickSort(array, size)
 начнем
-	в_случае (size < полушка)
+	коли (size < полушка)
 	начнем
 		положим;
 	закончим
 
 	возьмем pos зомбируем Partition(array, size, array[ноль]);
 
-	в_случае (pos == ноль)
+	коли (pos == ноль)
 	начнем
 		QuickSort(array - золотничок, size - целковый);
 	закончим
@@ -51,7 +51,7 @@
 
 	зомбирование_идет (i < size)
 	начнем
-		в_случае (pivot > array[i])
+		коли (pivot > array[i])
 		начнем
 			tmp зомбируем array[idx];
 			array[idx] зомбируем array[i];

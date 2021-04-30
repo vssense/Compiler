@@ -4,8 +4,8 @@ typedef unsigned char byte;
 
 const char* REGS[] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
                       "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"};
-const char* JUMPS[]        = {"je", "jne", "jl", "jg", "jle", "jge"};
-const byte JUMP_OP_CODES[] = {0x84,  0x85, 0x8c, 0x8f,  0x8e,  0x8d};
+const char* JUMPS[]         = {"je", "jne", "jl", "jg", "jle", "jge"};
+const byte  JUMP_OP_CODES[] = {0x84,  0x85, 0x8c, 0x8f,  0x8e,  0x8d};
 
 const int max_int  = 0xFFFFFFFF;
 const int max_char = 0xFF;
@@ -110,9 +110,7 @@ void WriteMovR64R64(Compiler* compiler, R64 reg1, R64 reg2)
     assert(compiler);
 
     SetByte(&compiler->writer, CodeRexByteR64R64(reg1, reg2));
-
     SetByte(&compiler->writer, mov_r64_r64);
-
     SetByte(&compiler->writer, CodeR64R64(mode_r64_r64, reg2, reg1));
 
     if (compiler->asm_listing_required)
@@ -214,15 +212,13 @@ void WriteAddR64Num(Compiler* compiler, R64 reg, int value)
     {
         SetByte(&compiler->writer, add_r64_num1);
         SetByte(&compiler->writer, CodeR64(mode_add_r64_num, reg));
-
         SetByte(&compiler->writer, value);
     }
     else
     {
         SetByte(&compiler->writer, add_r64_num4);
         SetByte(&compiler->writer, CodeR64(mode_add_r64_num, reg));
-
-        SetInt(&compiler->writer, value);
+        SetInt (&compiler->writer, value);
     }
 
     if (compiler->asm_listing_required)

@@ -10,8 +10,9 @@ Token*  NewTokensBuffer  ();
 void    PrintError       (Error error);
 void    PrintBeforeSymbol(char* str, char symbol);
 void    CompilationError (Parser* parser, size_t* idx);
-void    GetNumber        (Token* tokens, size_t* ofs, Buffer* buffer);
-void    GetName          (Token* tokens, size_t* ofs, Buffer* buffer);
+bool    GetNumber        (Token* tokens, size_t* ofs, Buffer* buffer);
+bool    GetOperator      (Token* tokens, size_t* ofs, Buffer* buffer);
+void    GetToken         (Token* tokens, size_t* ofs, Buffer* buffer);
 void    GetTokens        (Token* tokens, size_t* ofs, Buffer* buffer);
 void    Delete           (Buffer* buffer);
 void    ParserDump       (Parser* parser);
@@ -168,20 +169,7 @@ void IgnoreSpaces(Buffer* buffer)
     }
 }
 
-void GetNumber(Token* tokens, size_t* ofs, Buffer* buffer)
-{
-    int len = 0;
-
-    sscanf(buffer->str, "%d%n", &VALUE.number, &len);
-    
-    TYPE = TYPE_NUMB;
-    STR = buffer->str;
-    (*ofs)++;
-
-    buffer->str += len;
-}
-
-void GetName(Token* tokens, size_t* ofs, Buffer* buffer)
+bool GetNumber(Token* tokens, size_t* ofs, Buffer* buffer)
 {
     assert(tokens);
     assert(ofs);
@@ -189,30 +177,83 @@ void GetName(Token* tokens, size_t* ofs, Buffer* buffer)
 
     for (int i = 0; i < NUM_DIGITS; ++i)
     {
-        if (strncmp(buffer->str, DIGITS[i].digit, DIGITS[i].len) == 0)
+        if (strncmp(buffer->str, DIGITS[i].rus_digit, DIGITS[i].rus_len) == 0)
         {
             VALUE.number = i;
             TYPE         = TYPE_NUMB;
             STR          = buffer->str;
 
-            buffer->str += DIGITS[i].len;
+            buffer->str += DIGITS[i].rus_len;
             (*ofs)++;
-            return;
+            return true;
+        }
+
+        if (strncmp(buffer->str, DIGITS[i].eng_digit, DIGITS[i].eng_len) == 0)
+        {
+            VALUE.number = i;
+            TYPE         = TYPE_NUMB;
+            STR          = buffer->str;
+
+            buffer->str += DIGITS[i].eng_len;
+            (*ofs)++;
+            return true;
         }
     }
 
+    return false;
+}
+
+bool GetOperator(Token* tokens, size_t* ofs, Buffer* buffer)
+{
+    assert(tokens);
+    assert(ofs);
+    assert(buffer);
+
     for (int i = 0; i < NUM_OPERATORS; ++i)
     {
-        if (strncmp(buffer->str, OPERATORS[i].name, OPERATORS[i].len) == 0)
+        if (strncmp(buffer->str, OPERATORS[i].rus_name, OPERATORS[i].rus_len) == 0)
         {
             VALUE.op = i;
             TYPE     = TYPE_OP;
             STR      = buffer->str;
 
-            buffer->str += OPERATORS[i].len;
+            buffer->str += OPERATORS[i].rus_len;
             (*ofs)++;
-            return;
+            return true;
         }
+
+        if (OPERATORS[i].eng_name != nullptr)
+        {
+            if (strncmp(buffer->str, OPERATORS[i].eng_name, OPERATORS[i].eng_len) == 0)
+            {
+                VALUE.op = i;
+                TYPE     = TYPE_OP;
+                STR      = buffer->str;
+
+                buffer->str += OPERATORS[i].eng_len;
+                (*ofs)++;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void GetToken(Token* tokens, size_t* ofs, Buffer* buffer)
+{
+    assert(tokens);
+    assert(ofs);
+    assert(buffer);
+
+    if (GetNumber(tokens, ofs, buffer))
+    {
+        return;
+    }
+
+    if (GetOperator(tokens, ofs, buffer))
+    {
+        return;
     }
 
     int len = 0;
@@ -221,7 +262,7 @@ void GetName(Token* tokens, size_t* ofs, Buffer* buffer)
     sscanf(buffer->str, "%[A-Za-z_]%n", VALUE.name, &len);
 
     TYPE = TYPE_ID;
-    STR = buffer->str;
+    STR  = buffer->str;
     buffer->str += len;
 
     (*ofs)++;
@@ -245,7 +286,7 @@ void GetTokens(Token* tokens, size_t* ofs, Buffer* buffer)
         }
         else
         {
-            GetName(tokens, ofs, buffer);
+            GetToken(tokens, ofs, buffer);
         }
 
         IgnoreSpaces(buffer);
@@ -330,7 +371,7 @@ void ParserDump(Parser* parser)
             }
             case TYPE_OP :
             {
-                printf("type operator, value = '%s'[%d]\n", OPERATORS[parser->tokens[i].value.op].name, parser->tokens[i].value.op);
+                printf("type operator, value = '%s'[%d]\n", OPERATORS[parser->tokens[i].value.op].rus_name, parser->tokens[i].value.op);
                 break;
             }
             default :

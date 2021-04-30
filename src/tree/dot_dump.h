@@ -197,6 +197,7 @@ void TreeDump(Tree* tree)
 {
     assert(tree);
 
+    system("mkdir -p log");
     FILE* dump_file = fopen(STANDARD_DOT_TXT_FILE_NAME, "w");
 
     fprintf(dump_file, "digraph G{\n");

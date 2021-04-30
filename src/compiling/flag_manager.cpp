@@ -2,19 +2,20 @@
 
 const char* flags[] =
 {
-    "-h", "-o", "-parser-dump", "-tree-dump",
-    "-nametable-dump", "-S", "-Os", "-Om"
+    "-h", "-o", "-S", "-Os", "-Om",
+    "-femit-parser-dump", "-femit-tree-dump", "-femit-nametable-dump"
 };
 
-const char* help_message = "use flags:\n"
-                 "      -h               display help                                                         \n"
-                 "      -o               name output with the next command line arg                           \n"
-                 "      -parser-dump     console dump of all tokens and their types                           \n"
-                 "      -tree-dump       build and open tree of program using dot(must exists 'log' directory)\n"
-                 "      -nametable-dump  console dump info about functions and variables                      \n"
-                 "      -S               create file with nasm code of your program                           \n"
-                 "      -Os              speed optimization                                                   \n"
-                 "      -Om              memory optimization                                                   \n";
+const char* help_message =
+"use flags:                                                                              \n\t"
+"      -h                    display help                                                \n\t"
+"      -o                    output file name (default b.out)                            \n\t"
+"      -S                    create file with nasm code of your program                  \n\t"
+"      -Os                   optimization for speed                                      \n\t"
+"      -Om                   optimization for memory usage                               \n\t"
+"      -femit-parser-dump    emit console dump of all tokens and their types             \n\t"
+"      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool\n\t"
+"      -femit-nametable-dump emit console dump info about functions and variables        \n\t";
 
 void GetFlag(const char** argv, FlagInfo* info, int* offset)
 {
@@ -31,31 +32,31 @@ void GetFlag(const char** argv, FlagInfo* info, int* offset)
     }
     else if (strcmp(argv[*offset], flags[2]) == 0)
     {
-        info->parser_dump_required = true;
+        info->asm_listing_required = true;
     }
     else if (strcmp(argv[*offset], flags[3]) == 0)
     {
-        info->tree_dump_required = true;
+        info->speed_optimization_required = true;
     }
     else if (strcmp(argv[*offset], flags[4]) == 0)
     {
-        info->nametable_dump_required = true;
+        info->memory_optimization_required = true;
     }
     else if (strcmp(argv[*offset], flags[5]) == 0)
     {
-        info->asm_listing_required = true;
+        info->parser_dump_required = true;
     }
     else if (strcmp(argv[*offset], flags[6]) == 0)
     {
-        info->speed_optimization_required = true;
+        info->tree_dump_required = true;
     }
     else if (strcmp(argv[*offset], flags[7]) == 0)
     {
-        info->memory_optimization_required = true;
+        info->nametable_dump_required = true;
     }
     else
     {
-        printf("Unknown flag. Use -h for help\n");
+        printf("Unknown flag <%s>. Use -h for help.\n", argv[*offset]);
     }
 }
 
