@@ -35,6 +35,8 @@ void       DeleteNameTable  (NameTable* table);
 /////////////////////////////////////////////////////////////////
 void Assemble                 (Tree* tree, FlagInfo* info);
 void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, FlagInfo* info);
+void InitCompiler             (Compiler* compiler, NameTable* table, FILE* file, FlagInfo* info);
+void WriteAsm_start           (Compiler* compiler);
 void WriteByteCodeToFile      (Compiler* compiler, FlagInfo* info);
 void WriteAsmStdFunctions     (Compiler* compiler);
 void WriteAsmStdData          (Compiler* compiler);
@@ -59,9 +61,7 @@ int  GetVarOfs                (Function* function, char* name);
                    assert(compiler->table);    \
                    assert(compiler->function)
 
-#define FUNC      compiler->function
-#define ASM_FILE  compiler->file
-#define LABEL     compiler->label
+#define FUNC       compiler->function
 
 void Compile(const int argc, const char** argv)
 {
@@ -124,34 +124,37 @@ void Assemble(Tree* tree, FlagInfo* info)
     }
 }
 
+void InitCompiler(Compiler* compiler, NameTable* table, FILE* file, FlagInfo* info)
+{
+    assert(compiler);
+    assert(table);
+    assert(info);
+
+    compiler->table    = table;
+    compiler->function = table->functions;
+    compiler->file     = file;
+    compiler->label    = 0;
+
+    compiler->asm_listing_required         = info->asm_listing_required;
+    compiler->speed_optimization_required  = info->speed_optimization_required;
+    compiler->memory_optimization_required = info->memory_optimization_required;
+
+    Construct(&compiler->writer);
+    InitElf64(&compiler->writer);
+}
+
 void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, FlagInfo* info)
 {
     assert(tree);
+    assert(table);
+    assert(info);
 
     Node* node = tree->root;
 
-    Compiler compiler             = {};
-    compiler.table                = table;
-    compiler.function             = table->functions;
-    compiler.file                 = file;
-    compiler.label                = 0;
-    compiler.asm_listing_required = info->asm_listing_required;
+    Compiler compiler = {};
 
-    Construct(&compiler.writer);
-    InitElf64(&compiler.writer);
-
-    if (info->asm_listing_required)
-    {
-        fprintf(file, "section .text\n"
-                      "global _start\n\n"
-                      "_start:      \n\t");
-    }
-
-    WriteCall     (&compiler, FindFunc("main", compiler.table));
-    WriteMovR64Num(&compiler, RAX, 0x3c);
-    WriteMovR64Num(&compiler, RDI, 0x00);
-    WriteSyscall  (&compiler);
-
+    InitCompiler(&compiler, table, file, info);
+    WriteAsm_start(&compiler);
     WriteAsmStdFunctions(&compiler);
 
     for (size_t i = 0; i < table->num_func; ++i)
@@ -163,7 +166,6 @@ void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, FlagInfo* info)
     }
 
     WriteAsmStdData(&compiler);
-
     SetAllCalls(&compiler);
     SetElfHeaders(&compiler.writer);
 
@@ -172,6 +174,21 @@ void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, FlagInfo* info)
     DestructNameTable(table);
     DeleteNameTable(table);
     Destruct(&compiler.writer);
+}
+
+void WriteAsm_start(Compiler* compiler)
+{
+    if (compiler->asm_listing_required)
+    {
+        fprintf(compiler->file, "section .text\n"
+                                "global _start\n\n"
+                                "_start:      \n\t");
+    }
+
+    WriteCall     (compiler, FindFunc("main", compiler->table));
+    WriteMovR64Num(compiler, RAX, 0x3c);
+    WriteMovR64Num(compiler, RDI, 0x00);
+    WriteSyscall  (compiler);
 }
 
 void WriteByteCodeToFile(Compiler* compiler, FlagInfo* info)
@@ -208,8 +225,8 @@ void WriteAsmStdFunctions(Compiler* compiler)
 
     if (compiler->asm_listing_required)
     {
-        fprintf(ASM_FILE, "%s", nasm_print_func);
-        fprintf(ASM_FILE, "%s", nasm_scan_func);
+        fprintf(compiler->file, "%s", nasm_print_func);
+        fprintf(compiler->file, "%s", nasm_scan_func);
     }
 }
 
@@ -227,7 +244,7 @@ void WriteAsmStdData(Compiler* compiler)
 
     if (compiler->asm_listing_required)
     {
-        fprintf(ASM_FILE, "%s", asm_data);
+        fprintf(compiler->file, "%s", asm_data);
     }
 }
 
@@ -337,8 +354,8 @@ void WriteAsmLoop(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    size_t loop_label = LABEL++;
-    size_t continue_label = LABEL++;
+    size_t loop_label = compiler->label++;
+    size_t continue_label = compiler->label++;
 
     size_t loop_label_offset = WriteLabel(compiler, loop_label);
 
@@ -363,9 +380,9 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
 
     WriteAsmExpression(node->left, compiler);
 
-    size_t true_label = LABEL++;
-    size_t false_label = LABEL++;
-    size_t continue_label = LABEL++;
+    size_t true_label = compiler->label++;
+    size_t false_label = compiler->label++;
+    size_t continue_label = compiler->label++;
 
     WritePopR64(compiler, RAX);
     WriteTest  (compiler, RAX, RAX);
@@ -620,8 +637,8 @@ void WriteAsmCompare(Node* node, Compiler* compiler)
     WritePopR64   (compiler, RBX);
     WriteCmpR64R64(compiler, RBX, RAX);
 
-    size_t true_label     = LABEL++;
-    size_t continue_label = LABEL++;
+    size_t true_label     = compiler->label++;
+    size_t continue_label = compiler->label++;
 
     size_t true_jump_offset = WriteJumpOp(compiler, node->value.op, true_label);
 

@@ -45,6 +45,14 @@ void GetFlag(const char** argv, FlagInfo* info, int* offset)
     {
         info->asm_listing_required = true;
     }
+    else if (strcmp(argv[*offset], flags[6]) == 0)
+    {
+        info->speed_optimization_required = true;
+    }
+    else if (strcmp(argv[*offset], flags[7]) == 0)
+    {
+        info->memory_optimization_required = true;
+    }
     else
     {
         printf("Unknown flag. Use -h for help\n");

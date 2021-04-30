@@ -35,6 +35,8 @@ struct Compiler
     size_t label;
 
     bool asm_listing_required;
+    bool speed_optimization_required;
+    bool memory_optimization_required;
 
     ElfFileWriter writer;
 

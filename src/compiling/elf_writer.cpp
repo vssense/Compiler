@@ -140,6 +140,18 @@ void SetByte(ElfFileWriter* writer, char byte)
     writer->buffer[writer->offset++] = byte;
 }
 
+char LastByte(ElfFileWriter* writer)
+{
+    assert(writer);
+
+    if (writer->offset > 0)
+    {
+        return writer->buffer[writer->offset - 1];
+    }
+
+    return 0xFF;
+}
+
 void SetInt(ElfFileWriter* writer, int value)
 {
     assert(writer);

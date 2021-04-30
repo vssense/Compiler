@@ -35,6 +35,7 @@ struct ElfFileWriter
 
 void   Construct      (ElfFileWriter* writer);
 void   SetByte        (ElfFileWriter* writer, char byte);
+char   LastByte       (ElfFileWriter* writer);
 void   SetInt         (ElfFileWriter* writer, int value);
 void   SetInt         (ElfFileWriter* writer, int value, size_t offset);
 void   SetLong        (ElfFileWriter* writer, int64_t value);

@@ -7,6 +7,9 @@ const char* REGS[] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
 const char* JUMPS[]        = {"je", "jne", "jl", "jg", "jle", "jge"};
 const byte JUMP_OP_CODES[] = {0x84,  0x85, 0x8c, 0x8f,  0x8e,  0x8d};
 
+const int max_int  = 0xFFFFFFFF;
+const int max_char = 0xFF;
+
 const byte default_r64_rex = 0b01001000;
 
 const byte reg1_additional_bit = 0b001;
@@ -23,11 +26,14 @@ const byte mov_r64_r64  = 0x89;
 const byte mov_r64_mem  = 0x8b;
 const byte mov_mem_r64  = 0x89;
 const byte add_r64_r64  = 0x01;
-const byte add_r64_num  = 0x81;
+const byte add_r64_num4 = 0x81;
+const byte add_r64_num1 = 0x83;
 const byte sub_r64_r64  = 0x29;
-const byte sub_r64_num  = 0x81;
+const byte sub_r64_num4 = 0x81;
+const byte sub_r64_num1 = 0x83;
 const byte mul_div_r64  = 0xf7;
-const byte push_num     = 0x68;
+const byte push_num4    = 0x68;
+const byte push_num1    = 0x6a;
 const byte sal_r64      = 0xc1;
 const byte cmp_r64_r64  = 0x29;
 const byte call_func    = 0xe8;
@@ -47,7 +53,7 @@ const byte mode_add_r64_num = 0b11000;
 const byte mode_sub_r64_num = 0b11101;
 const byte mode_mul_r64_num = 0b11100;
 const byte mode_div_r64_num = 0b11110;
-const byte mode_push_num    = 0b01010;
+const byte mode_push_r64    = 0b01010;
 const byte mode_pop_r64     = 0b01011;
 const byte mode_sal_r64     = 0b11100;
 
@@ -55,8 +61,9 @@ const byte mode_r64_r64         = 0b11;
 const byte mode_r64_mem_4_bytes = 0b10;
 const byte mode_r64_mem_1_byte  = 0b01;
 
-
-const int reg_code_len = 3;
+const int reg_code_len      = 3;
+const int pop_reg_str_size  = 9;
+const int push_reg_str_size = 10;
 
 byte CodeRexByteR64R64(R64 reg1, R64 reg2)
 {
@@ -160,10 +167,22 @@ void WriteMovR64Num(Compiler* compiler, R64 reg, int64_t value)
 {
     assert(compiler);
 
-    SetByte(&compiler->writer, CodeRexByteR64(reg));
-    SetByte(&compiler->writer, CodeR64(mode_mov_r64_num, reg));
+    if (compiler->memory_optimization_required && abs(value) < max_int)
+    {
+        if (reg > RDI)
+        {
+            SetByte(&compiler->writer, additional_push_pop_byte);
+        }
 
-    SetLong(&compiler->writer, value);
+        SetByte(&compiler->writer, CodeR64(mode_mov_r64_num, reg));
+        SetInt(&compiler->writer, value);
+    }
+    else
+    {
+        SetByte(&compiler->writer, CodeRexByteR64(reg));
+        SetByte(&compiler->writer, CodeR64(mode_mov_r64_num, reg));
+        SetLong(&compiler->writer, value);
+    }
 
     if (compiler->asm_listing_required)
     {
@@ -176,9 +195,7 @@ void WriteAddR64R64(Compiler* compiler, R64 reg1, R64 reg2)
     assert(compiler);
 
     SetByte(&compiler->writer, CodeRexByteR64R64(reg1, reg2));
-
     SetByte(&compiler->writer, add_r64_r64);
-
     SetByte(&compiler->writer, CodeR64R64(mode_r64_r64, reg2, reg1));
 
     if (compiler->asm_listing_required)
@@ -192,10 +209,21 @@ void WriteAddR64Num(Compiler* compiler, R64 reg, int value)
     assert(compiler);
 
     SetByte(&compiler->writer, CodeRexByteR64(reg));
-    SetByte(&compiler->writer, add_r64_num);
-    SetByte(&compiler->writer, CodeR64(mode_add_r64_num, reg));
 
-    SetInt(&compiler->writer, value);
+    if (compiler->memory_optimization_required && abs(value) < max_char)
+    {
+        SetByte(&compiler->writer, add_r64_num1);
+        SetByte(&compiler->writer, CodeR64(mode_add_r64_num, reg));
+
+        SetByte(&compiler->writer, value);
+    }
+    else
+    {
+        SetByte(&compiler->writer, add_r64_num4);
+        SetByte(&compiler->writer, CodeR64(mode_add_r64_num, reg));
+
+        SetInt(&compiler->writer, value);
+    }
 
     if (compiler->asm_listing_required)
     {
@@ -208,9 +236,7 @@ void WriteSubR64R64(Compiler* compiler, R64 reg1, R64 reg2)
     assert(compiler);
 
     SetByte(&compiler->writer, CodeRexByteR64R64(reg1, reg2));
-
     SetByte(&compiler->writer, sub_r64_r64);
-
     SetByte(&compiler->writer, CodeR64R64(mode_r64_r64, reg2, reg1));
 
     if (compiler->asm_listing_required)
@@ -224,10 +250,21 @@ void WriteSubR64Num(Compiler* compiler, R64 reg, int value)
     assert(compiler);
 
     SetByte(&compiler->writer, CodeRexByteR64(reg));
-    SetByte(&compiler->writer, sub_r64_num);
-    SetByte(&compiler->writer, CodeR64(mode_sub_r64_num, reg));
+    
+    if (compiler->memory_optimization_required && abs(value) < max_char)
+    {
+        SetByte(&compiler->writer, sub_r64_num1);
+        SetByte(&compiler->writer, CodeR64(mode_sub_r64_num, reg));
 
-    SetInt(&compiler->writer, value);
+        SetByte(&compiler->writer, value);
+    }
+    else
+    {
+        SetByte(&compiler->writer, sub_r64_num4);
+        SetByte(&compiler->writer, CodeR64(mode_sub_r64_num, reg));
+
+        SetInt(&compiler->writer, value);
+    }
 
     if (compiler->asm_listing_required)
     {
@@ -271,12 +308,30 @@ void WritePushR64(Compiler* compiler, R64 reg)
 {
     assert(compiler);
 
+    if (compiler->speed_optimization_required &&
+        CodeR64(mode_pop_r64, reg) == LastByte(&compiler->writer))
+    {
+        if (compiler->asm_listing_required)
+        {
+            fseek(compiler->file, -pop_reg_str_size, SEEK_CUR);
+        }
+
+        compiler->writer.offset--;
+        
+        if (LastByte(&compiler->writer) == additional_push_pop_byte)
+        {
+            compiler->writer.offset--;
+        }
+
+        return;
+    }
+
     if (reg > RDI)
     {
         SetByte(&compiler->writer, additional_push_pop_byte);
     }
 
-    SetByte(&compiler->writer, CodeR64(mode_push_num, reg));
+    SetByte(&compiler->writer, CodeR64(mode_push_r64, reg));
 
     if (compiler->asm_listing_required)
     {
@@ -288,9 +343,16 @@ void WritePushNum(Compiler* compiler, int value)
 {
     assert(compiler);
 
-    SetByte(&compiler->writer, push_num);
-
-    SetInt(&compiler->writer, value);
+    if (compiler->memory_optimization_required && abs(value) < max_char)
+    {
+        SetByte(&compiler->writer, push_num1);
+        SetByte(&compiler->writer, value); 
+    }
+    else
+    {
+        SetByte(&compiler->writer, push_num4);
+        SetInt(&compiler->writer, value);
+    }
 
     if (compiler->asm_listing_required)
     {
@@ -301,6 +363,25 @@ void WritePushNum(Compiler* compiler, int value)
 void WritePopR64(Compiler* compiler, R64 reg)
 {
     assert(compiler);
+
+    if (compiler->speed_optimization_required &&
+        CodeR64(mode_push_r64, reg) == LastByte(&compiler->writer))
+    {
+        if (compiler->asm_listing_required)
+        {
+            fseek(compiler->file, -push_reg_str_size, SEEK_CUR);
+        }
+
+        compiler->writer.offset--;
+        
+        if (LastByte(&compiler->writer) == additional_push_pop_byte)
+        {
+            compiler->writer.offset--;
+        }
+
+        return;
+    }
+
 
     if (reg > RDI)
     {

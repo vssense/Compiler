@@ -2,7 +2,7 @@
 
 ## Idea
 - I already got compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language) which compiles for very slow [CPU](https://github.com/vssense/Processor)
-- In this project I added arrays and ability to compile to nasm and even to byte code
+- In this project I added arrays and ability to compile to nasm and even to x86-64 byte code
 ### Usage
 ```
 $ git clone https://github.com/vssense/Compiler.git
