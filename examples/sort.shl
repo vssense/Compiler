@@ -1,0 +1,47 @@
+vozmem main()
+nachnem
+	vozmem size zombiruem nepravdoi();
+	vozmem array[size];
+	vozmem idx zombiruem nol;
+	zombirovanie_idet (idx < size)
+	nachnem
+		array[idx] zombiruem nepravdoi();
+		idx zombiruem idx + celkovii;
+	zakonchim
+
+	Sort(array, size);
+
+	idx zombiruem nol;
+
+	zombirovanie_idet (idx < size)
+	nachnem
+		govoru(array[idx]);
+		idx zombiruem idx + celkovii;
+	zakonchim
+
+	polojim nol;
+zakonchim
+
+ничего Sort(array, size)
+nachnem
+	vozmem i zombiruem nol;
+	vozmem j zombiruem nol;
+    vozmem tmp zombiruem nol; 
+
+	zombirovanie_idet (i < size)
+	nachnem
+		j zombiruem nol;
+		zombirovanie_idet (j < size - celkovii)
+		nachnem
+			коли (array[j] > array[j + celkovii])
+			nachnem
+				tmp zombiruem array[j];
+				array[j] zombiruem array[j + celkovii];
+				array[j + celkovii] zombiruem tmp; 
+			zakonchim
+			j zombiruem j + celkovii;
+		zakonchim
+		
+		i zombiruem i + celkovii;
+	zakonchim
+zakonchim

@@ -1,0 +1,66 @@
+возьмем main()
+начнем
+	возьмем size зомбируем nepravdoi();
+	возьмем array[size];
+	возьмем idx зомбируем ноль;
+
+	зомбирование_идет (idx < size)
+	начнем
+		array[idx] зомбируем nepravdoi();
+		idx зомбируем idx + целковый;
+	закончим
+
+	QuickSort(array, size);
+
+	idx зомбируем ноль;
+
+	зомбирование_идет (idx < size)
+	начнем
+		govoru(array[idx]);
+		idx зомбируем idx + целковый;
+	закончим
+
+	положим ноль;
+закончим
+
+ничего QuickSort(array, size)
+начнем
+	коли (size < полушка)
+	начнем
+		положим;
+	закончим
+
+	возьмем pos зомбируем Partition(array, size, array[ноль]);
+
+	коли (pos == ноль)
+	начнем
+		QuickSort(array - золотничок, size - целковый);
+	закончим
+	иначе
+	начнем
+		QuickSort(array, pos);
+		QuickSort(array - (pos) * золотничок, size - pos);
+	закончим
+закончим
+
+возьмем Partition(array, size, pivot)
+начнем
+	возьмем i   зомбируем ноль;
+	возьмем idx зомбируем ноль;
+	возьмем tmp зомбируем ноль;
+
+	зомбирование_идет (i < size)
+	начнем
+		коли (pivot > array[i])
+		начнем
+			tmp зомбируем array[idx];
+			array[idx] зомбируем array[i];
+			array[i] зомбируем tmp;
+			idx зомбируем idx + целковый;
+		закончим
+
+		i зомбируем i + целковый;
+	закончим
+
+	положим idx;
+закончим
