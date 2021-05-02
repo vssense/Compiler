@@ -18,9 +18,108 @@ const uint64_t elf_segment_alignment  = 0xFFF;
 
 const int num_segments = 2;
 
+bool WriterOk(ElfFileWriter* writer, const char* function)
+{
+    bool is_ok = true;
+    if (writer == nullptr)
+    {
+        printf("writer is nullptr\n");
+        return false;
+    }
+
+    if (writer->calls == nullptr)
+    {
+        printf("calls is nullptr\n");
+        is_ok = false;
+    }
+
+    if (writer->canary1 != canary1_check)
+    {
+        printf("first canary dead(%lu)(\n", writer->canary1);
+        is_ok = false;
+    }
+
+    if (writer->canary2 != canary2_check)
+    {
+        printf("second canary dead(%lu)\n", writer->canary2);
+        is_ok = false;
+    }
+
+    if (writer->offset > writer->buffer_capacity)
+    {
+        printf("offset > buffer_capacity\n");
+        is_ok = false;
+    }
+
+    if (writer->calls_size > writer->calls_capacity)
+    {
+        printf("calls_size  > calls_capacity\n");
+        is_ok = false;
+    }
+
+    for (size_t i = 0; i < writer->calls_size; ++i)
+    {
+        if (writer->calls[i].function == nullptr)
+        {
+            printf("function[%lu] pointer is nullptr\n", i);
+            break;
+        }
+
+        if (writer->calls[i].offset > writer->offset)
+        {
+            printf("incorrect offset[%lu] value = %lu\n", i, writer->calls[i].offset);
+            break;
+        }
+    }
+
+    if (!is_ok)
+    {
+        printf("function from calld = %s\n", function);
+    }
+
+    return is_ok;
+}
+
+void DumpWriter(ElfFileWriter* writer)
+{
+    printf(
+    "canary1         = %lu (%lu)\n"
+    "buffer          = %p \n"
+    "offset          = %lu[0x%lx]\n"
+    "buffer_capacity = %lu[0x%lx]\n"
+    "calls           = %p \n"
+    "calls_size      = %lu\n"
+    "calls_capacity  = %lu\n"
+    "canary2         = %lu (%lu)\n",
+    writer->canary1, canary1_check,
+    writer->buffer,
+    writer->offset, writer->offset,
+    writer->buffer_capacity, writer->buffer_capacity,
+    writer->calls,
+    writer->calls_size,
+    writer->calls_capacity,
+    writer->canary2, canary2_check);
+
+    for (size_t i = 0; i < writer->calls_capacity; ++i)
+    {
+        if (i < writer->calls_size)
+        {
+            printf(" [%lu] offset = %lu, pointer = %p\n", i,
+                   writer->calls[i].offset, writer->calls[i].function);
+        }
+        else
+        {
+            printf("*[%lu] offset = %lu, pointer = %p\n", i,
+                   writer->calls[i].offset, writer->calls[i].function);
+        }
+    }
+
+
+}
+
 void InitElf64(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     int* tmp_ptr = (int*)writer->header.e_ident;
     *tmp_ptr = elf_magic;
@@ -62,7 +161,7 @@ void InitElf64(ElfFileWriter* writer)
 
 size_t InitDataSegment(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
     
     writer->text_header.p_filesz = writer->offset - elf_text_offset;
     writer->text_header.p_memsz  = writer->offset - elf_text_offset;
@@ -73,7 +172,7 @@ size_t InitDataSegment(ElfFileWriter* writer)
 
     if (writer->buffer_capacity < writer->offset + elf_data_size)
     {
-        writer->buffer_capacity = writer->offset + elf_data_size;
+        writer->buffer_capacity = writer->offset + elf_data_size + 1;
         writer->buffer          = (char*)realloc(writer->buffer,
                                                  writer->buffer_capacity * sizeof(char));
         assert(writer->buffer);
@@ -87,15 +186,13 @@ size_t InitDataSegment(ElfFileWriter* writer)
 
 void SetElfHeaders(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     memcpy(writer->buffer, &writer->header, sizeof(Elf64_Ehdr) + num_segments * sizeof(Elf64_Phdr));
 }
 
 void Construct(ElfFileWriter* writer)
 {
-    assert(writer);
-
     writer->offset = 0;
     writer->buffer = (char*)calloc(buffer_default_size, sizeof(char));
     writer->buffer_capacity = buffer_default_size;
@@ -107,7 +204,7 @@ void Construct(ElfFileWriter* writer)
 
 void CheckElfWriterBuffer(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     if (writer->offset >= writer->buffer_capacity - sizeof(int64_t))
     {
@@ -120,7 +217,7 @@ void CheckElfWriterBuffer(ElfFileWriter* writer)
 
 void CheckElfWriterCallsBuffer(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     if (writer->calls_size >= writer->calls_capacity - 1)
     {
@@ -133,7 +230,7 @@ void CheckElfWriterCallsBuffer(ElfFileWriter* writer)
 
 void SetByte(ElfFileWriter* writer, char byte)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     CheckElfWriterBuffer(writer);
 
@@ -142,7 +239,7 @@ void SetByte(ElfFileWriter* writer, char byte)
 
 char LastByte(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     if (writer->offset > 0)
     {
@@ -154,7 +251,7 @@ char LastByte(ElfFileWriter* writer)
 
 void SetInt(ElfFileWriter* writer, int value)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     CheckElfWriterBuffer(writer);
 
@@ -165,7 +262,7 @@ void SetInt(ElfFileWriter* writer, int value)
 
 void SetInt(ElfFileWriter* writer, int value, size_t offset)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     int* tmp_ptr = (int*)(writer->buffer + offset);
     *tmp_ptr = value;
@@ -173,7 +270,7 @@ void SetInt(ElfFileWriter* writer, int value, size_t offset)
 
 void SetLong(ElfFileWriter* writer, int64_t value)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     CheckElfWriterBuffer(writer);
 
@@ -184,7 +281,7 @@ void SetLong(ElfFileWriter* writer, int64_t value)
 
 void AddCall(ElfFileWriter* writer, size_t offset, Function* function)
 {
-    assert(writer);
+    ASSERT_WRITER;
     assert(function);
 
     CheckElfWriterCallsBuffer(writer);
@@ -194,7 +291,7 @@ void AddCall(ElfFileWriter* writer, size_t offset, Function* function)
 
 void Destruct(ElfFileWriter* writer)
 {
-    assert(writer);
+    ASSERT_WRITER;
 
     assert(writer->buffer);
     free(writer->buffer);

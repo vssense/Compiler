@@ -57,9 +57,11 @@ void WriteAsmCompare          (Node* node, Compiler* compiler);
 int  GetVarOfs                (Function* function, char* name);
 
 
-#define ASM_ASSERT assert(node);               \
-                   assert(compiler->table);    \
-                   assert(compiler->function)
+#define ASM_ASSERT assert(node);                         \
+                   assert(compiler->table);              \
+                   assert(compiler->function);           \
+                   if (compiler->asm_listing_required)   \
+                       assert(compiler->file)
 
 #define FUNC       compiler->function
 

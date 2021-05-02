@@ -9,7 +9,7 @@
 
 struct Function;
 
-const int buffer_default_size = 2048;
+const int buffer_default_size = 8192;
 const int calls_default_size  = 16;
 
 struct CallInfo
@@ -18,8 +18,27 @@ struct CallInfo
     Function* function;
 };
 
+#define WRITER_DEBUG
+
+#ifdef  WRITER_DEBUG
+const size_t canary1_check = 0xDED32DED32DED999;
+const size_t canary2_check = 0xDEADDEADDEADDEAD;
+
+#define ASSERT_WRITER if (!WriterOk(writer, __func__)) \
+                      {                      \
+                         DumpWriter(writer); \
+                         assert(0);          \
+                      }
+#else
+#define ASSERT_WRITER
+#endif
+
 struct ElfFileWriter
 {
+    #ifdef WRITER_DEBUG
+    size_t canary1 = canary1_check;
+    #endif
+
     char*  buffer;
     size_t offset;
     size_t buffer_capacity;
@@ -31,6 +50,10 @@ struct ElfFileWriter
     Elf64_Ehdr header;
     Elf64_Phdr text_header;
     Elf64_Phdr data_header;
+
+    #ifdef WRITER_DEBUG
+    size_t canary2 = canary2_check;
+    #endif
 };
 
 void   Construct      (ElfFileWriter* writer);

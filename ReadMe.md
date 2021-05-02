@@ -8,7 +8,7 @@
 - I named it Slavik Historical Language (or shlang).
 ### Usage
 ```
-$ git ```~~clown~~``` clone https://github.com/vssense/Compiler.git
+$ git clone https://github.com/vssense/Compiler.git
 $ make
 $ shlang -h
 ```
