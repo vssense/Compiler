@@ -34,11 +34,20 @@ $ ./shlang my_genius_prog.shl -o genius_prog -tree-dump
 ```
 $ ./shlang my_genius_prog.shl -femit-tree -o saved_tree.txt
 ```
+### Translation
 > To get drevniy-rus-language code from tree run:
-$ ./shlang saved_tree.txt -translate -o translated_prog.txt
 ``` 
+$ ./shlang saved_tree.txt -translate -o translated_prog.txt
 ```
 > This feature doesn't fully work with newest vesion of Drevniy Rus Language. Instead of unrecognised constructions you will see a message "can't interpret this construction".
+
+> There is [tree])https://github.com/vssense/Compiler/blob/master/factorial_potter_language_tree.txt) and [program])https://github.com/vssense/Compiler/blob/master/factorial_potter_language.txt) written in [potter language](https://github.com/tralf-strues/potter-tongue-x86). Thanks for sample, [tralf-strues](https://github.com/tralf-strues)!
+
+> Lets run translator:
+```
+$ ./shlang -translate factorial_potter_language_tree.txt
+```
+> We got program on Drevniy Rus Language (think about translating from THE BUSURMANCKIY SYNTAX of Drevniy Rus Language)
 ### The grammar :+1:
 
 >``` ruby

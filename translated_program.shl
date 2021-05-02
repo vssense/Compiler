@@ -1,0 +1,46 @@
+~ THIS FILE WAS GENERATED AUTOMATICLY
+~ TREE TAKED FROM FILE 'factorial_potter_language_tree.txt'          
+~ CHECK FILE BEFORE COMPILING      
+
+возьмем main()
+начнем
+	возьмем Harry зомбируем nepravdoi();
+	возьмем Dumbldore зомбируем nepravdoi();
+	возьмем George зомбируем Jinx(Harry, Dumbldore);
+	возьмем Fred зомбируем TimeTurner(Harry, Dumbldore);
+	коли (George == Fred)
+	начнем
+		govoru(четвертушка - полушка);
+		govoru(George);
+	закончим
+	иначе
+	начнем
+		govoru(ноль);
+		govoru(George);
+		govoru(Fred);
+	закончим
+закончим
+
+возьмем Jinx(Harry, Dumbldore)
+начнем
+	коли (Dumbldore == (четвертушка - полушка))
+	начнем
+		положим Harry;
+	закончим
+	иначе
+	начнем
+		положим Harry * Jinx(Harry, (Dumbldore - четвертушка) + полушка);
+	закончим
+закончим
+
+возьмем TimeTurner(Harry, Dumbldore)
+начнем
+	возьмем Hagrid зомбируем Harry;
+	зомбирование_идет ((Dumbldore - четвертушка) + полушка)
+	начнем
+		Hagrid зомбируем Hagrid * Harry;
+		Dumbldore зомбируем (Dumbldore - четвертушка) + полушка;
+	закончим
+	положим Hagrid;
+закончим
+

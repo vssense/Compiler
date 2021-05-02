@@ -1,0 +1,52 @@
+Godric's-Hollow factorial
+
+(oNo) May our Elderman live long and prosper
+
+imperio love horcrux
+alohomora
+    - avenseguim Harry     carpe-retractum accio
+    - avenseguim Dumbldore carpe-retractum colloshoo protego accio protego
+
+    - avenseguim George    carpe-retractum depulso Jinx       protego legilimens Harry, legilimens Dumbldore protego
+    - avenseguim Fred      carpe-retractum depulso TimeTurner protego legilimens Harry, legilimens Dumbldore protego
+
+    revelio protego legilimens George equal legilimens Fred protego
+    alohomora
+        - flagrate tria flipendo duo
+        - flagrate legilimens George
+    colloportus
+    otherwise
+    alohomora
+        - flagrate horcrux
+        - flagrate legilimens George
+        - flagrate legilimens Fred
+    colloportus
+
+colloportus
+
+imperio Jinx Harry, Dumbldore
+alohomora
+    revelio protego legilimens Dumbldore equal tria flipendo duo protego
+    alohomora
+        - reverte legilimens Harry
+    colloportus
+    otherwise
+    alohomora
+        - reverte legilimens Harry geminio depulso Jinx protego legilimens Harry, legilimens Dumbldore flipendo tria epoximise duo protego
+    colloportus
+colloportus
+
+imperio TimeTurner Harry, Dumbldore
+alohomora
+    - avenseguim Hagrid carpe-retractum legilimens Harry
+
+    while protego legilimens Dumbldore flipendo tria epoximise duo protego
+    alohomora
+        - Hagrid    carpe-retractum legilimens Hagrid geminio legilimens Harry
+        - Dumbldore carpe-retractum legilimens Dumbldore flipendo tria epoximise duo 
+    colloportus 
+
+    - reverte legilimens Hagrid
+colloportus
+
+Privet-Drive
