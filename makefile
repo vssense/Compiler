@@ -12,7 +12,6 @@ build   = build/intermediates
 default : builddir shlang build/front-end build/middle-end build/back-end
 
 builddir : 
-	mkdir -p build
 	mkdir -p build/intermediates
 
 shlang : $(shldir)/main.cpp $(build)/flag_manager.o
