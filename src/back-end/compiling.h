@@ -37,8 +37,26 @@ struct NameTable
     size_t num_func;
 };
 
+// #define COMPILER_DEBUG
+
+#ifdef COMPILER_DEBUG 
+
+#define ASSERT_COMPILER if (!CompilerOk(compiler))          \
+                        {                                    \
+                           printf("function = %s", __func__);\
+                           DumpCompiler(compiler);           \
+                           assert(0);                        \
+                        }
+#else
+#define ASSERT_COMPILER
+#endif            
+
 struct Compiler
 {
+    #ifdef COMPILER_DEBUG
+    size_t canary1 = canary1_check;
+    #endif
+
     NameTable* table;
     Function*  function;
 
@@ -54,6 +72,10 @@ struct Compiler
 
     size_t print_offset;
     size_t scan_offset;
+        
+    #ifdef COMPILER_DEBUG
+    size_t canary2 = canary2_check;
+    #endif
 };
 
 NameTable* MakeTableOfNames(Tree* tree);

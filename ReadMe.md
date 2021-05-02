@@ -1,18 +1,18 @@
-# PREDOVEDOMLYANE!!! BUSURMANSKY YAZIK
-# NE TOLKO V KITAE COMPILATORЫ PISHUT
-# Programming language of drevniy rus  :scream_cat:
+# ~~ACHTUNG!~~ BUSURMANSKY YAZIK!!
+# NE TOLKO ~~V KITAE~~ COMPILATORЫ PISHUT!!!
+# Tre programming language of Drevniy Rus  :scream_cat:
 
 ## The idea
-- I already implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language). It outputs byte code for my (very slow) soft [CPU](https://github.com/vssense/Processor).
+- Recently I implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language). It outputs byte code for my (very slow) [Soft-CPU](https://github.com/vssense/Processor).
 - In this project I added data arrays and ability to compile to x86-64 native code and to output nasm listings for debug purposes.
-- I named it Slavik Historical Language (or shlang).
+- I named it Slavi**k** Historical Language (or **shlang**).
 ### Usage
 ```
 $ git clone https://github.com/vssense/Compiler.git
 $ make
-$ shlang -h
+$ ./shlang -h
 ```
->You will see a help message
+>You will see BLM output (Beautiful Language Message) explaining run syntax
 >```
 >use flags:
 >      -h                    display help        
@@ -23,13 +23,22 @@ $ shlang -h
 >      -femit-parser-dump    emit console dump of all tokens and their types
 >      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool
 >      -femit-nametable-dump emit console dump info about functions and variables
+>      -femit-tree           emit tree in written form for translation
+>      -translate            emit drevniy-rus-language code received from tree
 >```
 > For example, to open a picture with a tree of your program run:
 ```
-$ shlang my_genius_prog.txt -o genius_prog -tree-dump
-$ ./genius_prog
+$ ./shlang my_genius_prog.shl -o genius_prog -tree-dump
 ```
-### Grammar :+1:
+> To save tree of your program run
+```
+$ ./shlang my_genius_prog.shl -femit-tree -o saved_tree.txt
+```
+> To get drevniy-rus-language code from tree run:
+```
+$ ./shlang saved_tree.txt -translate -o translated_prog.txt
+``` 
+### The grammar :+1:
 
 >``` ruby
 >Abbreviation:
@@ -76,25 +85,25 @@ $ ./genius_prog
 >       Num  ::= 'ноль' - 'десятичок'
 >    ```
 
-### Syntax :+1:
+### The syntax :+1:
 
-> You have to save your program with Windows 1251 encoding.
+> Use Windows 1251 encoding to save your program.
 
 > if you are BUSURMANIN you can use english key-words instead of SLAVIK.
 
 > There is no digits - you can use only drevniy rus arithmetics :smirk_cat: :
 >
-> - 0  - ноль        - nol
-> - 1  - целковый    - celkovii
-> - 2  - полушка     - polushka
-> - 3  - четвертушка - chetvertushka
-> - 4  - осьмушка    - osmyshka
-> - 5  - пудовичок   - pudovichok
-> - 6  - медячок     - medyachok
-> - 7  - серебрячок  - serebryachok
-> - 8  - золотничок  - zolotnichok
-> - 9  - девятичок   - devyatichok
-> - 10 - десятичок   - desyatichok
+> - 0  - [ноль](https://www.youtube.com/watch?v=BwPT8_bB8dY)        - [nol](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 1  - [целковый](https://www.youtube.com/watch?v=BwPT8_bB8dY)    - [celkovii](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 2  - [полушка](https://www.youtube.com/watch?v=BwPT8_bB8dY)     - [polushka](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 3  - [четвертушка](https://www.youtube.com/watch?v=BwPT8_bB8dY) - [chetvertushka](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 4  - [осьмушка](https://www.youtube.com/watch?v=BwPT8_bB8dY)    - [osmyshka](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 5  - [пудовичок](https://www.youtube.com/watch?v=BwPT8_bB8dY)   - [pudovichok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 6  - [медячок](https://www.youtube.com/watch?v=BwPT8_bB8dY)     - [medyachok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 7  - [серебрячок](https://www.youtube.com/watch?v=BwPT8_bB8dY)  - [serebryachok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 8  - [золотничок](https://www.youtube.com/watch?v=BwPT8_bB8dY)  - [zolotnichok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 9  - [девятичок](https://www.youtube.com/watch?v=BwPT8_bB8dY)   - [devyatichok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+> - 10 - [десятичок](https://www.youtube.com/watch?v=BwPT8_bB8dY)   - [desyatichok](https://traditio.wiki/%D0%AE%D1%80%D0%B8%D0%B9_%D0%A1%D1%82%D0%B5%D0%BF%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87_%D0%A0%D1%8B%D0%B1%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
 >
 > As you could already understand
 >
@@ -108,24 +117,24 @@ $ ./genius_prog
 > - To declare a function use key-word "**возьмем**" ("*vozmem*") or "**ничего**" ("*nichego*")
 > - To declare a variable use key-word "**возьмем**" ("*vozmem*")
 
-### Features :+1:
+### Language features :+1:
 
 > - Everything is functions - you can't use global variables
 > - There is only one variable scope - function
-> - Also you have to use block's operators in each while and if/else statement
-> - Two variable types - int64_t and int64_t arrays
-> - You can use []operator to any of your variable - you can interpret it as a pointer
-> - You can use pointer arithmetic - but do not forget that arrays are going backwards (kol predkami zapovedano vnochno debajit)
-> - You must have "**main**" function - it will be called first
-> - You have to finish each statement with semicolon
+> - Also you have to use block operators in each ```while``` and ```if/else``` statement
+> - Two variable types - ```int64_t``` and ```int64_t arrays```
+> - You can use ```[]```operator to any of your variable - you can interpret it as a pointer
+> - You can use pointer arithmetic - but do not forget that arrays are going **backwards** (kol predkami zapovedano vnochno debajit)
+> - You must have ```main``` function - it will be called first
+> - You have to finish each statement with ```;```
 >
 >#### Some std functions :
 >
-> 1. govoru(a) - prints a
-> 2. a = nepravdoi() - takes a from stdin (you must finish your input with \n)
+> 1. ```govoru(a)``` - prints ```a```
+> 2. ```a = nepravdoi()``` - takes ```a``` from stdin (you must finish your input with ```\n```)
 
 ##### Now some examples
-> P.S.: [example](https://github.com/vssense/Compiler/blob/master/examples/sort.txt) using BUSURMANSIY LANGUAGE
+> P.S.: [example](https://github.com/vssense/Compiler/blob/master/examples/sort.shl) using THE BUSURMANSIY LANGUAGE
 
 ###### factorial :
 ```
@@ -148,7 +157,7 @@ $ ./genius_prog
 закончим
 ```
 
-###### qsort(skoroporyadok) :
+###### qsort (skoroporyadok) :
 
 ```возьмем main()
 начнем

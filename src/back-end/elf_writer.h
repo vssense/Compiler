@@ -18,7 +18,7 @@ struct CallInfo
     Function* function;
 };
 
-#define WRITER_DEBUG
+// #define WRITER_DEBUG
 
 #ifdef  WRITER_DEBUG
 const size_t canary1_check = 0xDED32DED32DED999;

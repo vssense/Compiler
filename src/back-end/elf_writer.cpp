@@ -18,6 +18,8 @@ const uint64_t elf_segment_alignment  = 0xFFF;
 
 const int num_segments = 2;
 
+#ifdef  WRITER_DEBUG
+
 bool WriterOk(ElfFileWriter* writer, const char* function)
 {
     bool is_ok = true;
@@ -113,9 +115,9 @@ void DumpWriter(ElfFileWriter* writer)
                    writer->calls[i].offset, writer->calls[i].function);
         }
     }
-
-
 }
+
+#endif
 
 void InitElf64(ElfFileWriter* writer)
 {

@@ -57,13 +57,75 @@ void WriteAsmCompare          (Node* node, Compiler* compiler);
 int  GetVarOfs                (Function* function, char* name);
 
 
-#define ASM_ASSERT assert(node);                         \
-                   assert(compiler->table);              \
-                   assert(compiler->function);           \
-                   if (compiler->asm_listing_required)   \
-                       assert(compiler->file)
+#define FUNC compiler->function
 
-#define FUNC       compiler->function
+#ifdef COMPILER_DEBUG
+
+bool CompilerOk(Compiler* compiler)
+{
+    bool is_ok = true;
+
+    if (compiler == nullptr)
+    {
+        printf("compiler is nullptr\n");
+        return false;
+    }
+
+    if (compiler->table == nullptr)
+    {
+        printf("table is nullptr\n");
+        is_ok = false;
+    }
+
+    if (compiler->asm_listing_required)
+    {
+        if (compiler->file == nullptr)
+        {
+            printf("asm listing required but file is nullptr\n");
+            is_ok = false;
+        }
+    }
+
+    if (compiler->canary1 != canary1_check)
+    {
+        printf("first canary dead(%lu)(\n", compiler->canary1);
+        is_ok = false;
+    }
+
+    if (compiler->canary2 != canary2_check)
+    {
+        printf("second canary dead(%lu)\n", compiler->canary2);
+        is_ok = false;
+    }
+
+    return is_ok;
+}
+void DumpCompiler(Compiler* compiler)
+{
+    printf(
+    "canary1  = %lu (%lu)\n"
+    "table    = %p \n"
+    "function = %p \n"
+    "file     = %p \n"
+    "label    = %lu\n"
+    "canary2  = %lu (%lu)\n"
+    "asm_listing_required         = %d\n"
+    "speed_optimization_required  = %d\n"
+    "memory_optimization_required = %d\n",
+    compiler->canary1, canary1_check,
+    compiler->table,
+    compiler->function,
+    compiler->file,
+    compiler->label,
+    compiler->canary2, canary2_check,
+    compiler->asm_listing_required,
+    compiler->speed_optimization_required,
+    compiler->memory_optimization_required);
+
+    NameTableDump(compiler->table);
+}
+
+#endif
 
 void Compile(Tree* tree, BackEndInfo* info)
 {
@@ -223,7 +285,7 @@ void WriteAsmStdData(Compiler* compiler)
 
 void WriteAsmFunc(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WriteFuncDecl(compiler, FUNC);
 
@@ -245,7 +307,7 @@ void WriteAsmCompound(Node* node, Compiler* compiler)
         return;
     }
 
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     while (node != nullptr)
     {
@@ -256,7 +318,7 @@ void WriteAsmCompound(Node* node, Compiler* compiler)
 
 void WriteAsmStatement(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     switch (node->type)
     {
@@ -313,7 +375,7 @@ void WriteAsmStatement(Node* node, Compiler* compiler)
 
 void WriteAsmArrayDeclaration(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WriteAsmExpression(node->right, compiler);
 
@@ -325,7 +387,7 @@ void WriteAsmArrayDeclaration(Node* node, Compiler* compiler)
 
 void WriteAsmLoop(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     size_t loop_label     = compiler->label++;
     size_t continue_label = compiler->label++;
@@ -349,7 +411,7 @@ void WriteAsmLoop(Node* node, Compiler* compiler)
 
 void WriteAsmCondition(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WriteAsmExpression(node->left, compiler);
 
@@ -383,7 +445,7 @@ void WriteAsmCondition(Node* node, Compiler* compiler)
 
 void WriteAsmAssignment(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WriteAsmExpression(node->right, compiler);
 
@@ -412,7 +474,7 @@ void WriteAsmExpression(Node* node, Compiler* compiler)
         return;    
     }
 
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     if (node->type == MATH_TYPE && node->value.op >= EQUAL_OP) // is comparison
     {
@@ -428,7 +490,7 @@ void WriteAsmExpression(Node* node, Compiler* compiler)
 
 void WriteAsmSimpleExpression(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     if (node->type == MATH_TYPE)
     {
@@ -476,7 +538,7 @@ void WriteAsmSimpleExpression(Node* node, Compiler* compiler)
 
 void WriteAsmPrimaryExpression(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     switch (node->type)
     {
@@ -510,7 +572,7 @@ void WriteAsmPrimaryExpression(Node* node, Compiler* compiler)
 
 void WriteAsmMemoryAccess(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WriteAsmExpression(node->right, compiler);
 
@@ -529,7 +591,7 @@ void WriteAsmCall(Node* node, Compiler* compiler)
         return;
     }
 
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     Function* call_func = FindFunc(node->left->value.name, compiler->table);
 
@@ -564,7 +626,7 @@ void WriteAsmCall(Node* node, Compiler* compiler)
 
 bool WriteAsmStdCall(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     if (strcmp(node->left->value.name, SCAN) == 0)
     {
@@ -604,7 +666,7 @@ Function* FindFunc(const char* name, NameTable* table)
 
 void WriteAsmCompare(Node* node, Compiler* compiler)
 {
-    ASM_ASSERT;
+    ASSERT_COMPILER;
 
     WritePopR64   (compiler, RAX);
     WritePopR64   (compiler, RBX);
