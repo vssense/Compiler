@@ -41,7 +41,7 @@ $ ./shlang saved_tree.txt -translate -o translated_prog.txt
 ```
 > This feature doesn't fully work with newest vesion of Drevniy Rus Language. Instead of unrecognised constructions you will see a message "can't interpret this construction".
 
-> There is [tree])https://github.com/vssense/Compiler/blob/master/factorial_potter_language_tree.txt) and [program])https://github.com/vssense/Compiler/blob/master/factorial_potter_language.txt) written in [potter language](https://github.com/tralf-strues/potter-tongue-x86). Thanks for sample, [tralf-strues](https://github.com/tralf-strues)!
+> There is [tree](https://github.com/vssense/Compiler/blob/master/factorial_potter_language_tree.txt) and [program](https://github.com/vssense/Compiler/blob/master/factorial_potter_language.txt) written in [potter language](https://github.com/tralf-strues/potter-tongue-x86). Thanks for sample, [tralf-strues](https://github.com/tralf-strues)!
 
 > Lets run translator:
 ```
