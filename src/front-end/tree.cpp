@@ -33,13 +33,13 @@ void  CheckAssigment           (Parser* parser, size_t* ofs);
 bool  IsComparison             (Parser* parser, size_t* ofs);
 int   MathTokenToNode          (int op);
 
-Tree* NewTree       ();
-Node* NewNode       ();
 Node* ConstructNode (NodeType type, Value value, Node* left, Node* right);
 Node* ConstructNode (NodeType type, Node* left, Node* right);
 Node* ConstructNode (NodeType type, Value value);
 Node* ConstructNode (NodeType type);
 void  DestuctSubtree(Node* node);
+Tree* NewTree       ();
+Node* NewNode       ();
 
 Tree* NewTree()
 {

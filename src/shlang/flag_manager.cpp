@@ -3,7 +3,8 @@
 const char* flags[] =
 {
     "-h", "-o", "-S", "-Os", "-Om",
-    "-femit-parser-dump", "-femit-tree-dump", "-femit-nametable-dump"
+    "-femit-parser-dump", "-femit-tree-dump", "-femit-nametable-dump",
+    "-femit-tree", "-translate"
 };
 
 const char* help_message =
@@ -15,7 +16,9 @@ const char* help_message =
 "      -Om                   optimization for memory usage                               \n\t"
 "      -femit-parser-dump    emit console dump of all tokens and their types             \n\t"
 "      -femit-tree-dump      emit tree diagram in 'log' subdir and open it using dot tool\n\t"
-"      -femit-nametable-dump emit console dump info about functions and variables        \n\t";
+"      -femit-nametable-dump emit console dump info about functions and variables        \n\t"
+"      -femit-tree           emit tree in written form for translation                   \n\t"
+"      -translate            emit drevniy-rus-language code received from tree           \n\t";
 
 void GetFlag(const char** argv, FlagInfo* info, int* offset)
 {
@@ -53,6 +56,14 @@ void GetFlag(const char** argv, FlagInfo* info, int* offset)
     else if (strcmp(argv[*offset], flags[7]) == 0)
     {
         info->nametable_dump_required = true;
+    }
+    else if (strcmp(argv[*offset], flags[8]) == 0)
+    {
+        info->emit_tree_requiered = true;
+    }
+    else if (strcmp(argv[*offset], flags[9]) == 0)
+    {
+        info->emit_code_requiered = true;
     }
     else
     {

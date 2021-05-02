@@ -1,5 +1,4 @@
 #include "compiling.h"
-#include "flag_manager.h"
 #include "byte_code.h"
 
 const size_t offset_to_set_data   = 0x02;
@@ -34,11 +33,11 @@ void       DeleteNameTable  (NameTable* table);
 /////////////////////////////////////////////////////////////////
 ///// Assemble
 /////////////////////////////////////////////////////////////////
-void Assemble                 (Tree* tree, FlagInfo* info);
-void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, FlagInfo* info);
-void InitCompiler             (Compiler* compiler, NameTable* table, FILE* file, FlagInfo* info);
+void Assemble                 (Tree* tree, BackEndInfo* info);
+void WriteAsmCode             (Tree* tree, NameTable* table, FILE* file, BackEndInfo* info);
+void InitCompiler             (Compiler* compiler, NameTable* table, FILE* file, BackEndInfo* info);
 void WriteAsm_start           (Compiler* compiler);
-void WriteByteCodeToFile      (Compiler* compiler, FlagInfo* info);
+void WriteByteCodeToFile      (Compiler* compiler, BackEndInfo* info);
 void WriteAsmStdFunctions     (Compiler* compiler);
 void WriteAsmStdData          (Compiler* compiler);
 void WriteAsmFunc             (Node* node, Compiler* compiler);
@@ -64,41 +63,7 @@ int  GetVarOfs                (Function* function, char* name);
 
 #define FUNC       compiler->function
 
-void Compile(const int argc, const char** argv)
-{
-    assert(argv);
-
-    FlagInfo info = {};
-    GetFlagInfo(argc, argv, &info);
-
-    if (info.input_file == nullptr)
-    {
-        printf("error : no input file\n");
-        return;
-    }
-
-    Parser* parser = Parse(info.input_file);
-    if (info.parser_dump_required)
-    {
-        ParserDump(parser);
-    }
-
-    Tree* tree = GetTree(parser);
-    if (info.tree_dump_required)
-    {
-        TreeDump(tree);
-    }
-
-    Assemble(tree, &info);
-
-    DestructTree(tree);
-    DeleteTree(tree);
-
-    DestructParser(parser);
-    DeleteParser(parser);
-}
-
-void Assemble(Tree* tree, FlagInfo* info)
+void Compile(Tree* tree, BackEndInfo* info)
 {
     assert(tree);
 
@@ -125,7 +90,7 @@ void Assemble(Tree* tree, FlagInfo* info)
     }
 }
 
-void InitCompiler(Compiler* compiler, NameTable* table, FILE* file, FlagInfo* info)
+void InitCompiler(Compiler* compiler, NameTable* table, FILE* file, BackEndInfo* info)
 {
     assert(compiler);
     assert(table);
@@ -144,7 +109,7 @@ void InitCompiler(Compiler* compiler, NameTable* table, FILE* file, FlagInfo* in
     InitElf64(&compiler->writer);
 }
 
-void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, FlagInfo* info)
+void WriteAsmCode(Tree* tree, NameTable* table, FILE* file, BackEndInfo* info)
 {
     assert(tree);
     assert(table);
@@ -192,7 +157,7 @@ void WriteAsm_start(Compiler* compiler)
     WriteSyscall  (compiler);
 }
 
-void WriteByteCodeToFile(Compiler* compiler, FlagInfo* info)
+void WriteByteCodeToFile(Compiler* compiler, BackEndInfo* info)
 {
     assert(compiler);
     assert(info);
@@ -360,7 +325,7 @@ void WriteAsmLoop(Node* node, Compiler* compiler)
 {
     ASM_ASSERT;
 
-    size_t loop_label = compiler->label++;
+    size_t loop_label     = compiler->label++;
     size_t continue_label = compiler->label++;
 
     size_t loop_label_offset = WriteLabel(compiler, loop_label);
@@ -376,7 +341,7 @@ void WriteAsmLoop(Node* node, Compiler* compiler)
     size_t loop_jump_offset      = WriteJump (compiler, loop_label);
     size_t continue_label_offset = WriteLabel(compiler, continue_label);
 
-    SetInt(&compiler->writer, loop_label_offset - loop_jump_offset - sizeof(int), loop_jump_offset);
+    SetInt(&compiler->writer, loop_label_offset     - loop_jump_offset     - sizeof(int), loop_jump_offset);
     SetInt(&compiler->writer, continue_label_offset - continue_jump_offset - sizeof(int), continue_jump_offset);
 }
 
@@ -864,4 +829,6 @@ void NameTableDump(NameTable* table)
             printf("%s[%d], ", table->functions[i].vars[j], GetVarOfs(table->functions + i, table->functions[i].vars[j]));
         }
     }
+
+    printf("\n");
 }

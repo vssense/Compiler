@@ -1,3 +1,6 @@
+#ifndef TREE_H
+#define TREE_H
+
 #include "parser.h"
 
 enum NodeType
@@ -23,7 +26,7 @@ enum NodeType
     MATH_TYPE,        // + - * / < > <= >= == !=          |
     NUMB_TYPE,        // double                           | value of number
 
-    TYPES_COUNT       // We will add scan, print, round   | p.s. Fictive nodes's values == 0
+    TYPES_COUNT       // p.s. Fictive nodes's values == 0
 };
 
 enum MathOp
@@ -57,7 +60,11 @@ struct Tree
     Node* root;
 };
 
-Tree* GetTree     (Parser* parser);
-void  TreeDump    (Tree* tree);
-void  DestructTree(Tree* tree);
-void  DeleteTree  (Tree* tree);
+Tree* GetTree      (Parser* parser);
+void  TreeDump     (Tree* tree);
+void  DestructTree (Tree* tree);
+void  DeleteTree   (Tree* tree);
+Node* ConstructNode(NodeType type, Value value);
+Tree* NewTree      ();
+Node* NewNode      ();
+#endif

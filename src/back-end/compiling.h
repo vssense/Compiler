@@ -1,7 +1,19 @@
 #ifndef COMPILING_H
 #define COMPILING_H
 
-#include "../tree/tree.h"
+#include "../front-end/tree.h"
+#include "../front-end/iotree.h"
+
+struct BackEndInfo
+{
+    const char* output_file = nullptr;
+
+    bool nametable_dump_required = false;
+    bool asm_listing_required    = false;
+
+    bool speed_optimization_required  = false;
+    bool memory_optimization_required = false;
+};
 
 struct Function
 {
@@ -46,6 +58,6 @@ struct Compiler
 
 NameTable* MakeTableOfNames(Tree* tree);
 void       DumpNameTable   (NameTable* table);
-void       Compile         (const int argc, const char** argv);
+void       Compile         (Tree* tree, BackEndInfo* info);
 
 #endif

@@ -51,7 +51,7 @@ void GetNames(char* dot_cmd, char* jpg_cmd)
     size_t num = GetJPGNumber();
 
     char num_str[NUM_STR_LEN] = "";
-    snprintf(num_str, NUM_STR_LEN - 1, "%lu", num);
+    snprintf(num_str, NUM_STR_LEN, "%lu", num);
     char extension[] = ".svg";
 
     strcat(dot_cmd, num_str);

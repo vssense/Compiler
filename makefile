@@ -1,38 +1,52 @@
 GPP = g++
 
 options = -Wall -Wextra
-src = src
-bin = build
+shldir  = src/shlang
+fedir   = src/front-end
+medir   = src/middle-end
+bedir   = src/back-end
+build   = build/intermediates
 
-input = input.txt
+.PHONY : builddir default
 
-.PHONY : bindir run default
+default : builddir shlang build/front-end build/middle-end build/back-end
 
-default : bindir shlang
-
-bindir : 
+builddir : 
 	mkdir -p build
- 
-run : shlang
-	shlang $(input)
+	mkdir -p build/intermediates
 
-shlang : $(bin)/parser.o $(bin)/tree.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/compiling.o $(bin)/elf_writer.o $(src)/main.cpp
-	$(GPP) $(src)/main.cpp $(bin)/parser.o $(bin)/elf_writer.o $(bin)/byte_code.o $(bin)/flag_manager.o $(bin)/tree.o $(bin)/compiling.o -o shlang $(options)
+shlang : $(shldir)/main.cpp $(build)/flag_manager.o
+	$(GPP) $(shldir)/main.cpp $(build)/flag_manager.o -o shlang $(options)
 
-$(bin)/byte_code.o : $(src)/compiling/byte_code.cpp $(src)/compiling/byte_code.h
-	$(GPP) -c $(src)/compiling/byte_code.cpp -o $(bin)/byte_code.o $(options)
+$(build)/flag_manager.o : $(shldir)/flag_manager.cpp $(shldir)/flag_manager.h
+	$(GPP) -c $(shldir)/flag_manager.cpp -o $(build)/flag_manager.o $(options)
 
-$(bin)/elf_writer.o : $(src)/compiling/elf_writer.cpp $(src)/compiling/elf_writer.h
-	$(GPP) -c $(src)/compiling/elf_writer.cpp -o $(bin)/elf_writer.o $(options)
+build/front-end : $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o
+	$(GPP) $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o -o build/front-end
 
-$(bin)/flag_manager.o : $(src)/compiling/flag_manager.cpp $(src)/compiling/flag_manager.h
-	$(GPP) -c $(src)/compiling/flag_manager.cpp -o $(bin)/flag_manager.o $(options)
+$(build)/iotree.o : $(fedir)/iotree.cpp $(fedir)/iotree.h
+	$(GPP) -c $(fedir)/iotree.cpp -o $(build)/iotree.o $(options)
 
-$(bin)/parser.o : $(src)/tree/parser.cpp $(src)/tree/parser.h
-	$(GPP) -c $(src)/tree/parser.cpp -o $(bin)/parser.o $(options)
+$(build)/parser.o : $(fedir)/parser.cpp $(fedir)/parser.h
+	$(GPP) -c $(fedir)/parser.cpp -o $(build)/parser.o $(options)
 
-$(bin)/compiling.o : $(src)/compiling/compiling.cpp $(src)/compiling/compiling.h $(src)/compiling/std_func.cpp $(src)/compiling/byte_code.h
-	$(GPP) -c $(src)/compiling/compiling.cpp -o $(bin)/compiling.o $(options)
+$(build)/tree.o : $(fedir)/tree.cpp $(fedir)/tree.h $(fedir)/dot_dump.h $(fedir)/parser.h
+	$(GPP) -c $(fedir)/tree.cpp -o $(build)/tree.o $(options)
 
-$(bin)/tree.o : $(src)/tree/tree.cpp $(src)/tree/tree.h $(src)/tree/parser.h $(src)/tree/dot_dump.h
-	$(GPP) -c $(src)/tree/tree.cpp -o $(bin)/tree.o $(options)
+build/middle-end : $(medir)/middle-end_main.cpp $(build)/iotree.o $(build)/tree_optimize.o $(build)/parser.o $(build)/tree.o
+	$(GPP) $(medir)/middle-end_main.cpp $(build)/iotree.o $(build)/tree_optimize.o $(build)/parser.o $(build)/tree.o -o build/middle-end
+
+$(build)/tree_optimize.o : $(medir)/tree_optimize.cpp $(medir)/tree_optimize.h $(fedir)/iotree.h
+	$(GPP) -c $(medir)/tree_optimize.cpp -o $(build)/tree_optimize.o $(options)
+
+build/back-end : $(bedir)/back-end_main.cpp $(build)/compiling.o $(build)/byte_code.o $(build)/elf_writer.o $(build)/parser.o $(build)/tree.o $(build)/iotree.o
+	$(GPP) $(bedir)/back-end_main.cpp $(build)/compiling.o $(build)/byte_code.o $(build)/elf_writer.o $(build)/parser.o $(build)/tree.o -o build/back-end $(build)/iotree.o $(options)
+
+$(build)/compiling.o : $(bedir)/compiling.cpp $(bedir)/compiling.h $(fedir)/tree.h $(bedir)/std_func.cpp
+	$(GPP) -c $(bedir)/compiling.cpp -o $(build)/compiling.o $(options)
+
+$(build)/byte_code.o : $(bedir)/byte_code.cpp $(bedir)/byte_code.h $(bedir)/compiling.h
+	$(GPP) -c $(bedir)/byte_code.cpp -o $(build)/byte_code.o $(options)
+
+$(build)/elf_writer.o : $(bedir)/elf_writer.cpp $(bedir)/elf_writer.h
+	$(GPP) -c $(bedir)/elf_writer.cpp -o $(build)/elf_writer.o $(options)
