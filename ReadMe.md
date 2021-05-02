@@ -28,7 +28,7 @@ $ ./shlang -h
 >```
 > For example, to open a picture with a tree of your program run:
 ```
-$ ./shlang my_genius_prog.shl -o genius_prog -tree-dump
+$ ./shlang my_genius_prog.shl -o genius_prog -femit-tree-dump
 ```
 > To save tree of your program run
 ```
