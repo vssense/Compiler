@@ -37,8 +37,8 @@ $ ./shlang my_genius_prog.shl -femit-tree -o saved_tree.txt
 > To get drevniy-rus-language code from tree run:
 $ ./shlang saved_tree.txt -translate -o translated_prog.txt
 ``` 
-> This feature doesn't fully work with newest vesion of Drevniy Rus Language. Instead of unrecognised construction you will see a message "can't interpret this construction".
 ```
+> This feature doesn't fully work with newest vesion of Drevniy Rus Language. Instead of unrecognised construction you will see a message "can't interpret this construction".
 ### The grammar :+1:
 
 >``` ruby
