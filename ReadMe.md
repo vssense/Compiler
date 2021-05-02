@@ -1,9 +1,9 @@
 # ~~ACHTUNG!~~ BUSURMANSKY YAZIK!!
 # NE TOLKO ~~V KITAE~~ COMPILATORЫ PISHUT!!!
-# Tre programming language of Drevniy Rus  :scream_cat:
+# Tre programming language of [Drevniy Rus](https://www.youtube.com/watch?v=BwPT8_bB8dY)  :scream_cat:
 
 ## The idea
-- Recently I implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language). It outputs byte code for my (very slow) [Soft-CPU](https://github.com/vssense/Processor).
+- Recently I've implemented the compiler for my [drevniy-rus-language](https://github.com/vssense/Drevniy-rus-language). It outputs byte code for my (very slow) [Soft-CPU](https://github.com/vssense/Processor).
 - In this project I added data arrays and ability to compile to x86-64 native code and to output nasm listings for debug purposes.
 - I named it Slavi**k** Historical Language (or **shlang**).
 ### Usage
@@ -107,15 +107,15 @@ $ ./shlang saved_tree.txt -translate -o translated_prog.txt
 >
 > As you could already understand
 >
-> - loop is "**зомбирование_идет**" or "**zombirovanie_idet**"
-> - if is  "**коли**" ("*koli*")
-> - else is "**иначе**" ("*inache*")
-> - '=' is "**зомбируем**" ("*zombiruem*")
-> - start of block is "**начнем**" ("*nachnem*")
-> - end of block is "**закончим**" ("*zakonchim*")
+> - loop is ["**зомбирование_идет**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) or "**zombirovanie_idet**"
+> - if is  ["**коли**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*koli*")
+> - else is ["**иначе**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*inache*")
+> - '=' is ["**зомбируем**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*zombiruem*")
+> - start of block is ["**начнем**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*nachnem*")
+> - end of block is ["**закончим**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*zakonchim*")
 >
-> - To declare a function use key-word "**возьмем**" ("*vozmem*") or "**ничего**" ("*nichego*")
-> - To declare a variable use key-word "**возьмем**" ("*vozmem*")
+> - To declare a function use key-word ["**возьмем**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*vozmem*") or ["**ничего**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*nichego*")
+> - To declare a variable use key-word ["**возьмем**"](https://www.youtube.com/watch?v=BwPT8_bB8dY) ("*vozmem*")
 
 ### Language features :+1:
 
