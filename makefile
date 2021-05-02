@@ -21,8 +21,11 @@ shlang : $(shldir)/main.cpp $(build)/flag_manager.o
 $(build)/flag_manager.o : $(shldir)/flag_manager.cpp $(shldir)/flag_manager.h
 	$(GPP) -c $(shldir)/flag_manager.cpp -o $(build)/flag_manager.o $(options)
 
-build/front-end : $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o
-	$(GPP) $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o -o build/front-end
+build/front-end : $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o $(build)/translator.o
+	$(GPP) $(fedir)/front-end_main.cpp $(build)/iotree.o $(build)/parser.o $(build)/tree.o $(build)/translator.o -o build/front-end
+
+$(build)/translator.o : $(fedir)/translator.cpp $(fedir)/translator.h $(fedir)/iotree.h
+	$(GPP) -c $(fedir)/translator.cpp -o $(build)/translator.o $(options)
 
 $(build)/iotree.o : $(fedir)/iotree.cpp $(fedir)/iotree.h
 	$(GPP) -c $(fedir)/iotree.cpp -o $(build)/iotree.o $(options)

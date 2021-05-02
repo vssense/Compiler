@@ -1,12 +1,13 @@
 #include "tree.h"
 #include "iotree.h"
+#include "translator.h"
 
 const char* tree_tmp_file = "build/tree_tmp.txt";
 
 struct FrontEndInfo
 {
     const char* input_file  = nullptr;
-    const char* output_file = "tree_in_written_form.txt";
+    const char* output_file = nullptr;
 
     bool parser_dump_required    = false;
     bool tree_dump_required      = false;
@@ -38,7 +39,13 @@ int main(const int argc, const char* argv[])
 
     if (info.emit_code_requiered)
     {
-        ;
+        const char* output = "translated_program.shl";
+        if (info.output_file != nullptr)
+        {
+            output = info.output_file;
+        }
+
+        Translate(info.input_file, output);
         return 0;
     }
 
@@ -56,6 +63,7 @@ int main(const int argc, const char* argv[])
 
     if (info.emit_tree_requiered)
     {
+        const char* output = "tree_in_written_form.txt";
         WriteToFile(tree, info.output_file);
     }
     else
